@@ -1,0 +1,149 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+class Structure_ligne_champ extends CI_Controller
+{
+    function __construct()
+    {
+        parent::__construct();
+        $this->load->model('Structure_ligne_champ_model');
+        $this->load->library('form_validation');
+    }
+
+    public function index()
+    {
+        $q = urldecode($this->input->get('q', TRUE));
+        $start = intval($this->input->get('start'));
+        
+        if ($q <> '') {
+            $config['base_url'] = base_url() . 'structure_ligne_champ/index.html?q=' . urlencode($q);
+            $config['first_url'] = base_url() . 'structure_ligne_champ/index.html?q=' . urlencode($q);
+        } else {
+            $config['base_url'] = base_url() . 'structure_ligne_champ/index.html';
+            $config['first_url'] = base_url() . 'structure_ligne_champ/index.html';
+        }
+
+        $config['per_page'] = 10;
+        $config['page_query_string'] = TRUE;
+        $config['total_rows'] = $this->Structure_ligne_champ_model->total_rows($q);
+        $structure_ligne_champ = $this->Structure_ligne_champ_model->get_limit_data($config['per_page'], $start, $q);
+
+        $this->load->library('pagination');
+        $this->pagination->initialize($config);
+
+        $data = array(
+            'structure_ligne_champ_data' => $structure_ligne_champ,
+            'q' => $q,
+            'pagination' => $this->pagination->create_links(),
+            'total_rows' => $config['total_rows'],
+            'start' => $start,
+        );
+        $this->load->view('structure_ligne_champ_list', $data);
+    }
+
+    public function read($id) 
+    {
+        $row = $this->Structure_ligne_champ_model->get_by_id($id);
+        if ($row) {
+            $data = array(
+		'id_Modele_Ligne' => $row->id_Modele_Ligne,
+		'id_Champ_Modele' => $row->id_Champ_Modele,
+	    );
+            $this->load->view('structure_ligne_champ_read', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('structure_ligne_champ'));
+        }
+    }
+
+    public function create() 
+    {
+        $data = array(
+            'button' => 'Create',
+            'action' => site_url('structure_ligne_champ/create_action'),
+	    'id_Modele_Ligne' => set_value('id_Modele_Ligne'),
+	    'id_Champ_Modele' => set_value('id_Champ_Modele'),
+	);
+        $this->load->view('structure_ligne_champ_form', $data);
+    }
+    
+    public function create_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->create();
+        } else {
+            $data = array(
+	    );
+
+            $this->Structure_ligne_champ_model->insert($data);
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('structure_ligne_champ'));
+        }
+    }
+    
+    public function update($id) 
+    {
+        $row = $this->Structure_ligne_champ_model->get_by_id($id);
+
+        if ($row) {
+            $data = array(
+                'button' => 'Update',
+                'action' => site_url('structure_ligne_champ/update_action'),
+		'id_Modele_Ligne' => set_value('id_Modele_Ligne', $row->id_Modele_Ligne),
+		'id_Champ_Modele' => set_value('id_Champ_Modele', $row->id_Champ_Modele),
+	    );
+            $this->load->view('structure_ligne_champ_form', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('structure_ligne_champ'));
+        }
+    }
+    
+    public function update_action() 
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->update($this->input->post('id_Modele_Ligne', TRUE));
+        } else {
+            $data = array(
+	    );
+
+            $this->Structure_ligne_champ_model->update($this->input->post('id_Modele_Ligne', TRUE), $data);
+            $this->session->set_flashdata('message', 'Update Record Success');
+            redirect(site_url('structure_ligne_champ'));
+        }
+    }
+    
+    public function delete($id) 
+    {
+        $row = $this->Structure_ligne_champ_model->get_by_id($id);
+
+        if ($row) {
+            $this->Structure_ligne_champ_model->delete($id);
+            $this->session->set_flashdata('message', 'Delete Record Success');
+            redirect(site_url('structure_ligne_champ'));
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('structure_ligne_champ'));
+        }
+    }
+
+    public function _rules() 
+    {
+
+	$this->form_validation->set_rules('id_Modele_Ligne', 'id_Modele_Ligne', 'trim');
+	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+    }
+
+}
+
+/* End of file Structure_ligne_champ.php */
+/* Location: ./application/controllers/Structure_ligne_champ.php */
+/* Please DO NOT modify this information : */
+/* Generated by Harviacode Codeigniter CRUD Generator 2016-05-06 08:00:38 */
+/* http://harviacode.com */
