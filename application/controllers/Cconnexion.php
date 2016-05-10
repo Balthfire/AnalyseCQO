@@ -12,6 +12,7 @@ class Cconnexion extends CI_Controller
 
     public function index()
     {
+        $this->load->helper('url');
         $this->load->view('connexion');
 
     }
@@ -23,6 +24,7 @@ class Cconnexion extends CI_Controller
         $pwd = $_POST['pwd'];
         $utilisateur = new Utilisateur_model();
         $u = $utilisateur->get_by_id($NNI);
+        echo("chibre");
 
         if($u->NNI != "")
         {
@@ -38,12 +40,14 @@ class Cconnexion extends CI_Controller
             else
             {
                 $param['messagefail'] = "Mot de passe incorrect pour ce NNI";
+                echo("Mot de passe incorrect pour ce NNI");
                 $this->load->view("connexion", $param);
             }
         }
         else
         {
             $param['messagefail'] = "NNI incorrect";
+            echo("NNI incorrect");
             $this->load->view("connexion", $param);
         }
 
