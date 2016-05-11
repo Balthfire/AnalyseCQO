@@ -67,17 +67,17 @@
 	<div class="logo">Contrôles Qualité Optimisés</div>
 	<!-- Main Form -->
 	<div class="login-form-1">
-		<form id="login-form" class="text-left" action="Cconnexion/login" method="Post">
+		<form id="login-form" class="text-left" action="index.php/Cconnexion/login" method="Post">
 			<div class="login-form-main-message"></div>
 			<div class="main-login-form">
 				<div class="login-group">
 					<div class="form-group">
 						<label for="NNI" class="sr-only">Username</label>
-						<input type="text" class="form-control" id="NNI" name="lg_username" placeholder="NNI">
+						<input type="text" class="form-control" id="NNI" name="NNI" placeholder="NNI">
 					</div>
 					<div class="form-group">
 						<label for="pwd" class="sr-only">Password</label>
-						<input type="password" class="form-control" id="pwd" name="lg_password" placeholder="Mot de passe">
+						<input type="password" class="form-control" id="pwd" name="pwd" placeholder="Mot de passe">
 					</div>
 					<div class="form-group login-group-checkbox">
 						<input type="checkbox" id="lg_remember" name="lg_remember">

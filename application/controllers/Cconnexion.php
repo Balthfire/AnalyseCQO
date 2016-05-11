@@ -24,7 +24,6 @@ class Cconnexion extends CI_Controller
         $pwd = $_POST['pwd'];
         $utilisateur = new Utilisateur_model();
         $u = $utilisateur->get_by_id($NNI);
-        echo("chibre");
 
         if($u->NNI != "")
         {

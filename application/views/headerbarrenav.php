@@ -1,7 +1,9 @@
+<link rel="stylesheet" href="<?php echo base_url('/assets/bootstrap/css/bootstrap.css') ?>"/>
+<link rel="stylesheet" href="<?php echo base_url('/assets/styles/login.css') ?>"/>
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
-            <a class="navbar-brand" href="#"> ERDF </a>
+            <a class="navbar-brand" href="#"> CQO </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
