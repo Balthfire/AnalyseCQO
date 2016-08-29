@@ -44,11 +44,10 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Designation</th>
-		<th>Description</th>
-		<th>Id Type Indicateur</th>
+		<th>Libelle</th>
+		<th>Valeur</th>
 		<th>Id Controle</th>
-		<th>Id Modele Indicateur</th>
+		<th>Id Type Indicateur</th>
 		<th>Action</th>
             </tr><?php
             foreach ($indicateur_data as $indicateur)
@@ -56,11 +55,10 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $indicateur->designation ?></td>
-			<td><?php echo $indicateur->description ?></td>
-			<td><?php echo $indicateur->id_Type_Indicateur ?></td>
+			<td><?php echo $indicateur->libelle ?></td>
+			<td><?php echo $indicateur->valeur ?></td>
 			<td><?php echo $indicateur->id_Controle ?></td>
-			<td><?php echo $indicateur->id_Modele_Indicateur ?></td>
+			<td><?php echo $indicateur->id_Type_Indicateur ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('indicateur/read/'.$indicateur->id_Indicateur),'Read'); 

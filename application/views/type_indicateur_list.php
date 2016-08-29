@@ -45,6 +45,7 @@
             <tr>
                 <th>No</th>
 		<th>Libelle</th>
+		<th>Methode Calcul</th>
 		<th>Action</th>
             </tr><?php
             foreach ($type_indicateur_data as $type_indicateur)
@@ -53,6 +54,7 @@
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
 			<td><?php echo $type_indicateur->libelle ?></td>
+			<td><?php echo $type_indicateur->methode_calcul ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('type_indicateur/read/'.$type_indicateur->id_Type_Indicateur),'Read'); 

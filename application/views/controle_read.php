@@ -19,9 +19,10 @@
 	    <tr><td>Date Fin</td><td><?php echo $date_fin; ?></td></tr>
 	    <tr><td>Note</td><td><?php echo $note; ?></td></tr>
 	    <tr><td>Niveau Qualite</td><td><?php echo $Niveau_Qualite; ?></td></tr>
+	    <tr><td>Fichier Excell</td><td><?php echo $fichier_excell; ?></td></tr>
+	    <tr><td>Extension Fichier</td><td><?php echo $extension_fichier; ?></td></tr>
 	    <tr><td>Id Type Controle</td><td><?php echo $id_Type_Controle; ?></td></tr>
 	    <tr><td>NNI</td><td><?php echo $NNI; ?></td></tr>
-	    <tr><td>Id Modele Controle</td><td><?php echo $id_Modele_Controle; ?></td></tr>
 	    <tr><td></td><td><a href="<?php echo site_url('controle') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>

@@ -42,6 +42,94 @@ class Controle extends CI_Controller
         );
         $this->load->view('controle_list', $data);
     }
+    public function viewAjoutExcel()
+    {
+        $this->load->view('ajoutExcel');
+    }
+    public function viewGrapheTest()
+    {
+        $this->load->view('grapheTest');
+    }
+
+    public function ajoutExcel()
+    {
+        var_dump(APPPATH);
+
+        $resp ="chips1";
+        $this->load->model("Controle_model");
+        $controle = new Controle_model();
+        $c = $controle->get_by_id(1);
+        $config['upload_path'] = './temp/';
+        $config['allowed_types'] = 'xlsx';
+        $config['max_size']    = '400000000';
+        $config['encrypt_name'] = false;
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+        //var_dump($config['upload_path']);
+        //exit;
+        if ( ! $this->upload->do_upload('fichier_xl')) {
+            $this->session->set_flashdata('status', '<div class="alert alert-danger">'.$this->upload->display_errors().'</div>');
+            //redirect('index.php/Cconnexion/viewAjoutExcel');
+            redirect('index.php/Cconnexion/index');
+            $resp = "chips2";
+        } else {
+            $this->load->library('excel');
+            $objReader = PHPExcel_IOFactory::createReader("Excel2007");
+            $objReader->setReadDataOnly(true);
+            $data = $this->upload->data();
+            $objPHPExcel = $objReader->load($data['full_path']);
+            $objWorksheet = $objPHPExcel->getSheet(1);
+            $row = intval($objWorksheet->getHighestDataRow());
+            $stringCol = $objWorksheet->getHighestDataColumn();
+            $indexCol = PHPExcel_Cell::columnIndexFromString($stringCol);
+
+            // TODO : Modifier le intval -> internet
+            $this->load->model("Feuille_model");
+            $this->load->model("Cellule_model");
+
+            $feuille = new Feuille_model();
+            // TODO : gérer le numpage et l'id_controle dynamiquement
+            // TODO : gérer le htaccess (danscache)
+            $datafeuille =  array(
+                'nb_ligne' => $row,
+                'nb_colonne' => $indexCol,
+                'num_page' => 1,
+                'id_Controle' => 1
+            );
+            $idFeuille = $feuille->insert($datafeuille);
+            $cellule = new Cellule_model();
+            // x = colonne  y = ligne
+            for ($x = 1; $x < $indexCol; $x++) {
+                for ($y = 1; $y < $row; $y++) {
+                    $colString = PHPExcel_Cell::stringFromColumnIndex($x);
+                    //TODO : check la fonction PhpExcel GetCalculatedValue
+                    $cellvalue = $objPHPExcel->setActiveSheetIndex(1)->getCell($colString . $y)->getValue();
+                    $name = $objPHPExcel->getSheetNames();
+                    var_dump($name);
+
+                    if ($cellvalue != NULL)
+                    {
+                        $datacellule = array(
+                            'pos_x' => $x,
+                            'pos_y' => $y,
+                            'valeur' => $cellvalue,
+                            'id_feuille' => $idFeuille
+                        );
+                        $cellule->insert($datacellule);
+                    }
+                }
+            }
+            $resp = "chips3";
+            redirect('index.php/controle/viewAjoutExcel');
+        }
+        echo($resp);
+    }
+
+    public function ajoutControleParAjoutExcel()
+    {
+
+
+    }
 
     public function read($id) 
     {
@@ -56,9 +144,10 @@ class Controle extends CI_Controller
 		'date_fin' => $row->date_fin,
 		'note' => $row->note,
 		'Niveau_Qualite' => $row->Niveau_Qualite,
+		'fichier_excell' => $row->fichier_excell,
+		'extension_fichier' => $row->extension_fichier,
 		'id_Type_Controle' => $row->id_Type_Controle,
 		'NNI' => $row->NNI,
-		'id_Modele_Controle' => $row->id_Modele_Controle,
 	    );
             $this->load->view('controle_read', $data);
         } else {
@@ -80,9 +169,10 @@ class Controle extends CI_Controller
 	    'date_fin' => set_value('date_fin'),
 	    'note' => set_value('note'),
 	    'Niveau_Qualite' => set_value('Niveau_Qualite'),
+	    'fichier_excell' => set_value('fichier_excell'),
+	    'extension_fichier' => set_value('extension_fichier'),
 	    'id_Type_Controle' => set_value('id_Type_Controle'),
 	    'NNI' => set_value('NNI'),
-	    'id_Modele_Controle' => set_value('id_Modele_Controle'),
 	);
         $this->load->view('controle_form', $data);
     }
@@ -102,9 +192,10 @@ class Controle extends CI_Controller
 		'date_fin' => $this->input->post('date_fin',TRUE),
 		'note' => $this->input->post('note',TRUE),
 		'Niveau_Qualite' => $this->input->post('Niveau_Qualite',TRUE),
+		'fichier_excell' => $this->input->post('fichier_excell',TRUE),
+		'extension_fichier' => $this->input->post('extension_fichier',TRUE),
 		'id_Type_Controle' => $this->input->post('id_Type_Controle',TRUE),
 		'NNI' => $this->input->post('NNI',TRUE),
-		'id_Modele_Controle' => $this->input->post('id_Modele_Controle',TRUE),
 	    );
 
             $this->Controle_model->insert($data);
@@ -129,9 +220,10 @@ class Controle extends CI_Controller
 		'date_fin' => set_value('date_fin', $row->date_fin),
 		'note' => set_value('note', $row->note),
 		'Niveau_Qualite' => set_value('Niveau_Qualite', $row->Niveau_Qualite),
+		'fichier_excell' => set_value('fichier_excell', $row->fichier_excell),
+		'extension_fichier' => set_value('extension_fichier', $row->extension_fichier),
 		'id_Type_Controle' => set_value('id_Type_Controle', $row->id_Type_Controle),
 		'NNI' => set_value('NNI', $row->NNI),
-		'id_Modele_Controle' => set_value('id_Modele_Controle', $row->id_Modele_Controle),
 	    );
             $this->load->view('controle_form', $data);
         } else {
@@ -155,9 +247,10 @@ class Controle extends CI_Controller
 		'date_fin' => $this->input->post('date_fin',TRUE),
 		'note' => $this->input->post('note',TRUE),
 		'Niveau_Qualite' => $this->input->post('Niveau_Qualite',TRUE),
+		'fichier_excell' => $this->input->post('fichier_excell',TRUE),
+		'extension_fichier' => $this->input->post('extension_fichier',TRUE),
 		'id_Type_Controle' => $this->input->post('id_Type_Controle',TRUE),
 		'NNI' => $this->input->post('NNI',TRUE),
-		'id_Modele_Controle' => $this->input->post('id_Modele_Controle',TRUE),
 	    );
 
             $this->Controle_model->update($this->input->post('id_Controle', TRUE), $data);
@@ -189,9 +282,10 @@ class Controle extends CI_Controller
 	$this->form_validation->set_rules('date_fin', 'date fin', 'trim|required');
 	$this->form_validation->set_rules('note', 'note', 'trim|required|numeric');
 	$this->form_validation->set_rules('Niveau_Qualite', 'niveau qualite', 'trim|required');
+	$this->form_validation->set_rules('fichier_excell', 'fichier excell', 'trim|required');
+	$this->form_validation->set_rules('extension_fichier', 'extension fichier', 'trim|required');
 	$this->form_validation->set_rules('id_Type_Controle', 'id type controle', 'trim|required');
 	$this->form_validation->set_rules('NNI', 'nni', 'trim|required');
-	$this->form_validation->set_rules('id_Modele_Controle', 'id modele controle', 'trim|required');
 
 	$this->form_validation->set_rules('id_Controle', 'id_Controle', 'trim');
 	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
@@ -202,5 +296,5 @@ class Controle extends CI_Controller
 /* End of file Controle.php */
 /* Location: ./application/controllers/Controle.php */
 /* Please DO NOT modify this information : */
-/* Generated by Harviacode Codeigniter CRUD Generator 2016-05-06 08:00:38 */
+/* Generated by Harviacode Codeigniter CRUD Generator 2016-06-03 09:09:44 */
 /* http://harviacode.com */

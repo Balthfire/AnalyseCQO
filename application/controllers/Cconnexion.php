@@ -32,9 +32,14 @@ class Cconnexion extends CI_Controller
             {
                 $message = "Vous êtes connecté en tant que " . $u->Nom . " "
                     . $u->Prenom . " (" . $u->NNI . ")";
-                $params['message'] = $message;
-                $params['user'] = $u;
-                $this->load->view("accueil", $params);
+                $userdata = array(
+                    'user' => $u,
+                    'userNNI' => $u->NNI,
+                    'userNom' => $u->Nom,
+                    'userPrenom' => $u->Prenom,
+                );
+                $this->session->set_userdata($userdata);
+                $this->load->view("accueil");
             }
             else
             {

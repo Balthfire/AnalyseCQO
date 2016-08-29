@@ -51,9 +51,10 @@
 		<th>Date Fin</th>
 		<th>Note</th>
 		<th>Niveau Qualite</th>
+		<th>Fichier Excell</th>
+		<th>Extension Fichier</th>
 		<th>Id Type Controle</th>
 		<th>NNI</th>
-		<th>Id Modele Controle</th>
 		<th>Action</th>
             </tr><?php
             foreach ($controle_data as $controle)
@@ -68,9 +69,10 @@
 			<td><?php echo $controle->date_fin ?></td>
 			<td><?php echo $controle->note ?></td>
 			<td><?php echo $controle->Niveau_Qualite ?></td>
+			<td><?php echo $controle->fichier_excell ?></td>
+			<td><?php echo $controle->extension_fichier ?></td>
 			<td><?php echo $controle->id_Type_Controle ?></td>
 			<td><?php echo $controle->NNI ?></td>
-			<td><?php echo $controle->id_Modele_Controle ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('controle/read/'.$controle->id_Controle),'Read'); 

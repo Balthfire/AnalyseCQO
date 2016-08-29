@@ -1,5 +1,4 @@
 <link rel="stylesheet" href="<?php echo base_url('/assets/bootstrap/css/bootstrap.css') ?>"/>
-<link rel="stylesheet" href="<?php echo base_url('/assets/styles/login.css') ?>"/>
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
@@ -8,19 +7,22 @@
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
                 <li class="active">
-                    <a href="#">Lien1</a>
+                    <a href="#">Statistiques</a>
                 </li>
                 <li>
-                    <a href='../controle/create'>Lien2</a>
+                    <a href='<?php echo base_url('index.php/controle/create')?>'>Ajouter un Controle</a>
                 </li>
                 <li>
-                    <a href='../controle'>Liste Controle</a>
+                    <a href='<?php echo base_url('index.php/controle')?>'>Liste Controle</a>
                 </li>
                 <li>
-                    <a href='../controle'>Statistiques</a>
+                    <a href='<?php echo base_url('index.php/controle/viewAjoutExcel')?>'>Ajout Excel</a>
                 </li>
                 <li>
-                    <a href='../controle'>Moulinette</a>
+                    <a href='<?php echo base_url('index.php/controle/viewGrapheTest')?>'>AjoutGraph</a>
+                </li>
+                <li>
+                    <a href='../controle'>Moulinette excel</a>
                 </li>
 
                 <li class="dropdown">
@@ -32,6 +34,7 @@
                         <li> <a href='../controle/create'>Lien2</a></li>
                     </ul>
                 </li>
+            </ul>
         </div>
     </div>
 </nav>
