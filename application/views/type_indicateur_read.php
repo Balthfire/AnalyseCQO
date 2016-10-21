@@ -13,7 +13,6 @@
         <h2 style="margin-top:0px">Type_indicateur Read</h2>
         <table class="table">
 	    <tr><td>Libelle</td><td><?php echo $libelle; ?></td></tr>
-	    <tr><td>Methode Calcul</td><td><?php echo $methode_calcul; ?></td></tr>
 	    <tr><td></td><td><a href="<?php echo site_url('type_indicateur') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>

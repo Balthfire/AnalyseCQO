@@ -1,4 +1,6 @@
+
 <link rel="stylesheet" href="<?php echo base_url('/assets/bootstrap/css/bootstrap.css') ?>"/>
+
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
@@ -22,11 +24,10 @@
                     <a href='<?php echo base_url('index.php/controle/viewGrapheTest')?>'>AjoutGraph</a>
                 </li>
                 <li>
-                    <a href='../controle'>Moulinette excel</a>
+                    <a href='<?php echo base_url('index.php/controle/viewIframeTest')?>'>TestIframe</a>
                 </li>
-
                 <li class="dropdown">
-                    <a class="dropdown-toggle" aria-expanded="true" aria-haspopup="true" role="button" data-toggle="dropdown" href="#">
+                    <a class="dropdown-toggle" aria-expanded="true" aria-haspopup="true" role="button" data-toggle="dropdown" href="">
                         Dropdown exemple
                         <span class="caret"></span>
                     </a>

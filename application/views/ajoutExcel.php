@@ -1,7 +1,6 @@
 <?php include 'headerbarrenav.php'; ?>
 <link rel="stylesheet" href="<?php echo base_url('/assets/style/general.css') ?>"/>
 
-
 <html>
 <head>
     <title>Upload Form</title>
@@ -9,13 +8,15 @@
 <body>
  <div class="container">
    <div class="center-block">
-   <?php echo form_open_multipart('index.php/controle/ajoutExcel');?>
+   <?php echo form_open_multipart('index.php/controle/storeExcel');?>
 
-   <input type="file" id="fichier_xl" name="fichier_xl" size="20" />
+
+   <input type="file" id="fichier_xl" name="fichier_xl" size="20" class="btn btn-primary" />
+   <input type="hidden" name="id_Controle" value="<?php echo $_GET['idctrl']; ?>" />
+
    <br /><br />
-   <input type="submit" value="upload" />
+   <input type="submit" value="Upload" class="btn btn-primary" />
    </form>
-       <input type="text" id="resptext" name="resptext">
   </div>
  </div>
 </body>

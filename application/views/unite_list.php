@@ -45,6 +45,8 @@
             <tr>
                 <th>No</th>
 		<th>Libelle</th>
+		<th>SDUM</th>
+		<th>Valeur</th>
 		<th>Action</th>
             </tr><?php
             foreach ($unite_data as $unite)
@@ -53,6 +55,8 @@
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
 			<td><?php echo $unite->libelle ?></td>
+			<td><?php echo $unite->SDUM ?></td>
+			<td><?php echo $unite->Valeur ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('unite/read/'.$unite->id_Unite),'Read'); 

@@ -47,7 +47,8 @@
 		<th>Nb Ligne</th>
 		<th>Nb Colonne</th>
 		<th>Num Page</th>
-		<th>Id Controle</th>
+		<th>Nom Page</th>
+		<th>Id Colonne</th>
 		<th>Action</th>
             </tr><?php
             foreach ($feuille_data as $feuille)
@@ -58,7 +59,8 @@
 			<td><?php echo $feuille->nb_ligne ?></td>
 			<td><?php echo $feuille->nb_colonne ?></td>
 			<td><?php echo $feuille->num_page ?></td>
-			<td><?php echo $feuille->id_Controle ?></td>
+			<td><?php echo $feuille->nom_page ?></td>
+			<td><?php echo $feuille->id_colonne ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('feuille/read/'.$feuille->id_Feuille),'Read'); 

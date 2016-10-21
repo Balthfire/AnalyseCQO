@@ -25,8 +25,12 @@
             <input type="text" class="form-control" name="num_page" id="num_page" placeholder="Num Page" value="<?php echo $num_page; ?>" />
         </div>
 	    <div class="form-group">
-            <label for="int">Id Controle <?php echo form_error('id_Controle') ?></label>
-            <input type="text" class="form-control" name="id_Controle" id="id_Controle" placeholder="Id Controle" value="<?php echo $id_Controle; ?>" />
+            <label for="varchar">Nom Page <?php echo form_error('nom_page') ?></label>
+            <input type="text" class="form-control" name="nom_page" id="nom_page" placeholder="Nom Page" value="<?php echo $nom_page; ?>" />
+        </div>
+	    <div class="form-group">
+            <label for="int">Id Colonne <?php echo form_error('id_colonne') ?></label>
+            <input type="text" class="form-control" name="id_colonne" id="id_colonne" placeholder="Id Colonne" value="<?php echo $id_colonne; ?>" />
         </div>
 	    <input type="hidden" name="id_Feuille" value="<?php echo $id_Feuille; ?>" /> 
 	    <button type="submit" class="btn btn-primary"><?php echo $button ?></button> 

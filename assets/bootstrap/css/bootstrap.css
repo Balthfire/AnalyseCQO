@@ -11,7 +11,9 @@ html {
       -ms-text-size-adjust: 100%;
 }
 body {
-  margin: 0;
+  margin-top: 70px;
+  margin-left: 40px;
+  margin-right: 40px;
 }
 article,
 aside,
@@ -3319,7 +3321,7 @@ input[type="button"].btn-block {
   line-height: 1.33;
   border-radius: 6px;
 }
-select.input-group-lg > .form-control,
+.input-group-lg > .form-control,
 select.input-group-lg > .input-group-addon,
 select.input-group-lg > .input-group-btn > .btn {
   height: 46px;
