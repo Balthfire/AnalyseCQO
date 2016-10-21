@@ -258,10 +258,8 @@ class Controle extends CI_Controller
             $inputFileName = $uploadpath;
             $outputFileType = 'HTML';
             $outputFileName = './uploads/test.html';
-
             $objPHPExcelReader = PHPExcel_IOFactory::createReader($inputFileType);
             $objPHPExcel = $objPHPExcelReader->load($inputFileName);
-
             $objPHPExcelWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,$outputFileType);
             $objPHPExcel = $objPHPExcelWriter->save($outputFileName);*/
         }
