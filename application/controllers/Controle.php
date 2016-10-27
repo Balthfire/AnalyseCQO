@@ -209,6 +209,11 @@ class Controle extends CI_Controller
         $this->load->view('iframetest');
     }
 
+    public function viewvisueltest()
+    {
+        $this->load->view('testvisuel');
+    }
+
     public function viewProcessExcel()
     {
         $data = array
