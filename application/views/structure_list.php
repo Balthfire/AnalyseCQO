@@ -44,7 +44,9 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Annee Utilisation</th>
+		<th>Id Fichier</th>
+		<th>Id Colonne</th>
+		<th>Id Feuille</th>
 		<th>Action</th>
             </tr><?php
             foreach ($structure_data as $structure)
@@ -52,14 +54,16 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $structure->annee_utilisation ?></td>
+			<td><?php echo $structure->id_Fichier ?></td>
+			<td><?php echo $structure->id_Colonne ?></td>
+			<td><?php echo $structure->id_Feuille ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('structure/read/'.$structure->id_Type_Controle),'Read'); 
+				echo anchor(site_url('structure/read/'.$structure->id_Structure),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('structure/update/'.$structure->id_Type_Controle),'Update'); 
+				echo anchor(site_url('structure/update/'.$structure->id_Structure),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('structure/delete/'.$structure->id_Type_Controle),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('structure/delete/'.$structure->id_Structure),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

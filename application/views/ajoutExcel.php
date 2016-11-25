@@ -10,9 +10,8 @@
    <div class="center-block">
    <?php echo form_open_multipart('index.php/controle/storeExcel');?>
 
-
    <input type="file" id="fichier_xl" name="fichier_xl" size="20" class="btn btn-primary" />
-   <input type="hidden" name="id_Controle" value="<?php echo $_GET['idctrl']; ?>" />
+   <input type="hidden" name="id_Controle" value="<?php $_GET['idctrl'] ?>" />
 
    <br /><br />
    <input type="submit" value="Upload" class="btn btn-primary" />

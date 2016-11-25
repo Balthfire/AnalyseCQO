@@ -12,8 +12,11 @@
     <body>
         <h2 style="margin-top:0px">Fichier Read</h2>
         <table class="table">
-	    <tr><td>Libelle</td><td><?php echo $libelle; ?></td></tr>
-	    <tr><td>Id Controle</td><td><?php echo $id_Controle; ?></td></tr>
+	    <tr><td>Nom</td><td><?php echo $nom; ?></td></tr>
+	    <tr><td>Extension</td><td><?php echo $extension; ?></td></tr>
+	    <tr><td>Conteneur</td><td><?php echo $conteneur; ?></td></tr>
+	    <tr><td>Upload Path</td><td><?php echo $upload_path; ?></td></tr>
+	    <tr><td>Annee</td><td><?php echo $annee; ?></td></tr>
 	    <tr><td></td><td><a href="<?php echo site_url('fichier') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>

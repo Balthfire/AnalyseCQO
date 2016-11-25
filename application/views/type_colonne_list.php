@@ -44,7 +44,7 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Libelle</th>
+		<th>Nom</th>
 		<th>Action</th>
             </tr><?php
             foreach ($type_colonne_data as $type_colonne)
@@ -52,14 +52,14 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $type_colonne->libelle ?></td>
+			<td><?php echo $type_colonne->nom ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('type_colonne/read/'.$type_colonne->id_type_colonne),'Read'); 
+				echo anchor(site_url('type_colonne/read/'.$type_colonne->id_Type_Colonne),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('type_colonne/update/'.$type_colonne->id_type_colonne),'Update'); 
+				echo anchor(site_url('type_colonne/update/'.$type_colonne->id_Type_Colonne),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('type_colonne/delete/'.$type_colonne->id_type_colonne),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('type_colonne/delete/'.$type_colonne->id_Type_Colonne),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

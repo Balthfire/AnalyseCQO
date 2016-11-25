@@ -3,12 +3,12 @@
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
-class Feuille extends CI_Controller
+class Type_utilisateur extends CI_Controller
 {
     function __construct()
     {
         parent::__construct();
-        $this->load->model('Feuille_model');
+        $this->load->model('Type_utilisateur_model');
         $this->load->library('form_validation');
     }
 
@@ -18,43 +18,43 @@ class Feuille extends CI_Controller
         $start = intval($this->input->get('start'));
         
         if ($q <> '') {
-            $config['base_url'] = base_url() . 'feuille/index.html?q=' . urlencode($q);
-            $config['first_url'] = base_url() . 'feuille/index.html?q=' . urlencode($q);
+            $config['base_url'] = base_url() . 'type_utilisateur/index.html?q=' . urlencode($q);
+            $config['first_url'] = base_url() . 'type_utilisateur/index.html?q=' . urlencode($q);
         } else {
-            $config['base_url'] = base_url() . 'feuille/index.html';
-            $config['first_url'] = base_url() . 'feuille/index.html';
+            $config['base_url'] = base_url() . 'type_utilisateur/index.html';
+            $config['first_url'] = base_url() . 'type_utilisateur/index.html';
         }
 
         $config['per_page'] = 10;
         $config['page_query_string'] = TRUE;
-        $config['total_rows'] = $this->Feuille_model->total_rows($q);
-        $feuille = $this->Feuille_model->get_limit_data($config['per_page'], $start, $q);
+        $config['total_rows'] = $this->Type_utilisateur_model->total_rows($q);
+        $type_utilisateur = $this->Type_utilisateur_model->get_limit_data($config['per_page'], $start, $q);
 
         $this->load->library('pagination');
         $this->pagination->initialize($config);
 
         $data = array(
-            'feuille_data' => $feuille,
+            'type_utilisateur_data' => $type_utilisateur,
             'q' => $q,
             'pagination' => $this->pagination->create_links(),
             'total_rows' => $config['total_rows'],
             'start' => $start,
         );
-        $this->load->view('feuille_list', $data);
+        $this->load->view('type_utilisateur_list', $data);
     }
 
     public function read($id) 
     {
-        $row = $this->Feuille_model->get_by_id($id);
+        $row = $this->Type_utilisateur_model->get_by_id($id);
         if ($row) {
             $data = array(
-		'id_Feuille' => $row->id_Feuille,
+		'id_Type_Utilisateur' => $row->id_Type_Utilisateur,
 		'nom' => $row->nom,
 	    );
-            $this->load->view('feuille_read', $data);
+            $this->load->view('type_utilisateur_read', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
-            redirect(site_url('feuille'));
+            redirect(site_url('type_utilisateur'));
         }
     }
 
@@ -62,11 +62,11 @@ class Feuille extends CI_Controller
     {
         $data = array(
             'button' => 'Create',
-            'action' => site_url('feuille/create_action'),
-	    'id_Feuille' => set_value('id_Feuille'),
+            'action' => site_url('type_utilisateur/create_action'),
+	    'id_Type_Utilisateur' => set_value('id_Type_Utilisateur'),
 	    'nom' => set_value('nom'),
 	);
-        $this->load->view('feuille_form', $data);
+        $this->load->view('type_utilisateur_form', $data);
     }
     
     public function create_action() 
@@ -80,27 +80,27 @@ class Feuille extends CI_Controller
 		'nom' => $this->input->post('nom',TRUE),
 	    );
 
-            $this->Feuille_model->insert($data);
+            $this->Type_utilisateur_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('feuille'));
+            redirect(site_url('type_utilisateur'));
         }
     }
     
     public function update($id) 
     {
-        $row = $this->Feuille_model->get_by_id($id);
+        $row = $this->Type_utilisateur_model->get_by_id($id);
 
         if ($row) {
             $data = array(
                 'button' => 'Update',
-                'action' => site_url('feuille/update_action'),
-		'id_Feuille' => set_value('id_Feuille', $row->id_Feuille),
+                'action' => site_url('type_utilisateur/update_action'),
+		'id_Type_Utilisateur' => set_value('id_Type_Utilisateur', $row->id_Type_Utilisateur),
 		'nom' => set_value('nom', $row->nom),
 	    );
-            $this->load->view('feuille_form', $data);
+            $this->load->view('type_utilisateur_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
-            redirect(site_url('feuille'));
+            redirect(site_url('type_utilisateur'));
         }
     }
     
@@ -109,29 +109,29 @@ class Feuille extends CI_Controller
         $this->_rules();
 
         if ($this->form_validation->run() == FALSE) {
-            $this->update($this->input->post('id_Feuille', TRUE));
+            $this->update($this->input->post('id_Type_Utilisateur', TRUE));
         } else {
             $data = array(
 		'nom' => $this->input->post('nom',TRUE),
 	    );
 
-            $this->Feuille_model->update($this->input->post('id_Feuille', TRUE), $data);
+            $this->Type_utilisateur_model->update($this->input->post('id_Type_Utilisateur', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
-            redirect(site_url('feuille'));
+            redirect(site_url('type_utilisateur'));
         }
     }
     
     public function delete($id) 
     {
-        $row = $this->Feuille_model->get_by_id($id);
+        $row = $this->Type_utilisateur_model->get_by_id($id);
 
         if ($row) {
-            $this->Feuille_model->delete($id);
+            $this->Type_utilisateur_model->delete($id);
             $this->session->set_flashdata('message', 'Delete Record Success');
-            redirect(site_url('feuille'));
+            redirect(site_url('type_utilisateur'));
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
-            redirect(site_url('feuille'));
+            redirect(site_url('type_utilisateur'));
         }
     }
 
@@ -139,14 +139,14 @@ class Feuille extends CI_Controller
     {
 	$this->form_validation->set_rules('nom', 'nom', 'trim|required');
 
-	$this->form_validation->set_rules('id_Feuille', 'id_Feuille', 'trim');
+	$this->form_validation->set_rules('id_Type_Utilisateur', 'id_Type_Utilisateur', 'trim');
 	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
 }
 
-/* End of file Feuille.php */
-/* Location: ./application/controllers/Feuille.php */
+/* End of file Type_utilisateur.php */
+/* Location: ./application/controllers/Type_utilisateur.php */
 /* Please DO NOT modify this information : */
-/* Generated by Harviacode Codeigniter CRUD Generator 2016-10-28 15:16:08 */
+/* Generated by Harviacode Codeigniter CRUD Generator 2016-10-28 15:16:09 */
 /* http://harviacode.com */

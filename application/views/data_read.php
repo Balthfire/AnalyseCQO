@@ -10,11 +10,12 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Indicateur Read</h2>
+        <h2 style="margin-top:0px">Data Read</h2>
         <table class="table">
-	    <tr><td>Nom</td><td><?php echo $nom; ?></td></tr>
-	    <tr><td>Id Controle</td><td><?php echo $id_Controle; ?></td></tr>
-	    <tr><td></td><td><a href="<?php echo site_url('indicateur') ?>" class="btn btn-default">Cancel</a></td></tr>
+	    <tr><td>Data</td><td><?php echo $data; ?></td></tr>
+	    <tr><td>Num Ligne Excel</td><td><?php echo $num_ligne_excel; ?></td></tr>
+	    <tr><td>Id Structure</td><td><?php echo $id_Structure; ?></td></tr>
+	    <tr><td></td><td><a href="<?php echo site_url('data') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>
 </html>

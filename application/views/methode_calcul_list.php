@@ -10,10 +10,10 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Indicateur List</h2>
+        <h2 style="margin-top:0px">Methode_calcul List</h2>
         <div class="row" style="margin-bottom: 10px">
             <div class="col-md-4">
-                <?php echo anchor(site_url('indicateur/create'),'Create', 'class="btn btn-primary"'); ?>
+                <?php echo anchor(site_url('methode_calcul/create'),'Create', 'class="btn btn-primary"'); ?>
             </div>
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
@@ -23,7 +23,7 @@
             <div class="col-md-1 text-right">
             </div>
             <div class="col-md-3 text-right">
-                <form action="<?php echo site_url('indicateur/index'); ?>" class="form-inline" method="get">
+                <form action="<?php echo site_url('methode_calcul/index'); ?>" class="form-inline" method="get">
                     <div class="input-group">
                         <input type="text" class="form-control" name="q" value="<?php echo $q; ?>">
                         <span class="input-group-btn">
@@ -31,7 +31,7 @@
                                 if ($q <> '')
                                 {
                                     ?>
-                                    <a href="<?php echo site_url('indicateur'); ?>" class="btn btn-default">Reset</a>
+                                    <a href="<?php echo site_url('methode_calcul'); ?>" class="btn btn-default">Reset</a>
                                     <?php
                                 }
                             ?>
@@ -44,24 +44,22 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Nom</th>
-		<th>Id Controle</th>
+		<th>Libelle</th>
 		<th>Action</th>
             </tr><?php
-            foreach ($indicateur_data as $indicateur)
+            foreach ($methode_calcul_data as $methode_calcul)
             {
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $indicateur->nom ?></td>
-			<td><?php echo $indicateur->id_Controle ?></td>
+			<td><?php echo $methode_calcul->libelle ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('indicateur/read/'.$indicateur->id_Indicateur),'Read'); 
+				echo anchor(site_url('methode_calcul/read/'.$methode_calcul->id_Methode_Calcul),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/update/'.$indicateur->id_Indicateur),'Update'); 
+				echo anchor(site_url('methode_calcul/update/'.$methode_calcul->id_Methode_Calcul),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/delete/'.$indicateur->id_Indicateur),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('methode_calcul/delete/'.$methode_calcul->id_Methode_Calcul),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

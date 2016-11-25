@@ -45,25 +45,11 @@ class Controle extends CI_Controller
 
     public function read($id) 
     {
-        $this->load->model("Type_controle_model");
         $row = $this->Controle_model->get_by_id($id);
         if ($row) {
-            $idType = $row->id_Type_Controle ;
-            $type_controle = new Type_controle_model();
-            $type = $type_controle->get_by_id($idType);
-            $nomtype = $type->libelle;
             $data = array(
-
 		'id_Controle' => $row->id_Controle,
-		'designation' => $row->designation,
-		'description' => $row->description,
-		'num_vague' => $row->num_vague,
-		'date_debut' => $row->date_debut,
-		'date_fin' => $row->date_fin,
-		'note' => $row->note,
-		'Niveau_Qualite' => $row->Niveau_Qualite,
-		'fichier_excel' => $row->fichier_excel,
-		'id_Type_Controle' => $nomtype,
+		'nom' => $row->nom,
 		'NNI' => $row->NNI,
 	    );
             $this->load->view('controle_read', $data);
@@ -75,69 +61,46 @@ class Controle extends CI_Controller
 
     public function create() 
     {
-        $this->load->model("Type_controle_model");
-        $type_controle = new Type_controle_model();
         $data = array(
             'button' => 'Create',
-            'action' => 'http://localhost/controle_optimisateur3/index.php/controle/create_action',
-            'id_Controle' => set_value('id_Controle'),
-            'designation' => set_value('designation'),
-            'description' => set_value('description'),
-            'num_vague' => set_value('num_vague'),
-            'date_debut' => set_value('date_debut'),
-            'date_fin' => set_value('date_fin'),
-            'note' => set_value('note'),
-            'Niveau_Qualite' => set_value('Niveau_Qualite'),
-            'id_Type_Controle' => set_value('id_Type_Controle'),
-            'NNI' => set_value('NNI'),
-            'arrayTypeControle' => $type_controle->get_all(),
-
+            'action' => site_url('index.php/controle/create_action'),
+	    'id_Controle' => set_value('id_Controle'),
+	    'nom' => set_value('nom'),
+	    'NNI' => set_value('NNI'),
 	);
         $this->load->view('controle_form', $data);
     }
     
     public function create_action() 
     {
+        $this->_rules();
 
+        if ($this->form_validation->run() == FALSE) {
+            $this->create();
+        } else {
             $data = array(
-		'designation' => $this->input->post('designation',TRUE),
-		'description' => $this->input->post('description',TRUE),
-		'num_vague' => $this->input->post('num_vague',TRUE),
-		'date_debut' => $this->input->post('date_debut',TRUE),
-		'date_fin' => $this->input->post('date_fin',TRUE),
-		'note' => $this->input->post('note',TRUE),
-		'Niveau_Qualite' => $this->input->post('Niveau_Qualite',TRUE),
-		'id_Type_Controle' => $this->input->post('Type_Controle',TRUE),
+		'nom' => $this->input->post('nom',TRUE),
 		'NNI' => $this->input->post('NNI',TRUE),
 	    );
 
             $this->Controle_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('index.php/controle'));
-
+        }
     }
     
     public function update($id) 
     {
-        $this->load->model("Type_controle_model");
         $row = $this->Controle_model->get_by_id($id);
-        $type_controle = new Type_controle_model();
+
         if ($row) {
             $data = array(
                 'button' => 'Update',
-                'action' => 'http://localhost/controle_optimisateur3/index.php/controle/update_action',
+                'action' => site_url('index.php/controle/update_action'),
                 'id_Controle' => set_value('id_Controle', $row->id_Controle),
-                'designation' => set_value('designation', $row->designation),
-                'description' => set_value('description', $row->description),
-                'num_vague' => set_value('num_vague', $row->num_vague),
-                'date_debut' => set_value('date_debut', $row->date_debut),
-                'date_fin' => set_value('date_fin', $row->date_fin),
-                'note' => set_value('note', $row->note),
-                'Niveau_Qualite' => set_value('Niveau_Qualite', $row->Niveau_Qualite),
-                'id_Type_Controle' => set_value('Type_Controle', $row->id_Type_Controle),
+                'nom' => set_value('nom', $row->nom),
                 'NNI' => set_value('NNI', $row->NNI),
-                'arrayTypeControle' => $type_controle->get_all(),
-            );
+	        );
             $this->load->view('controle_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
@@ -147,22 +110,20 @@ class Controle extends CI_Controller
     
     public function update_action() 
     {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->update($this->input->post('id_Controle', TRUE));
+        } else {
             $data = array(
-		'designation' => $this->input->post('designation',TRUE),
-		'description' => $this->input->post('description',TRUE),
-		'num_vague' => $this->input->post('num_vague',TRUE),
-		'date_debut' => $this->input->post('date_debut',TRUE),
-		'date_fin' => $this->input->post('date_fin',TRUE),
-		'note' => $this->input->post('note',TRUE),
-		'Niveau_Qualite' => $this->input->post('Niveau_Qualite',TRUE),
-		'id_Type_Controle' => $this->input->post('Type_Controle',TRUE),
+		'nom' => $this->input->post('nom',TRUE),
 		'NNI' => $this->input->post('NNI',TRUE),
 	    );
 
             $this->Controle_model->update($this->input->post('id_Controle', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
-            redirect(site_url('index.php/controle'));
-
+            redirect(site_url('controle'));
+        }
     }
     
     public function delete($id) 
@@ -181,54 +142,35 @@ class Controle extends CI_Controller
 
     public function _rules() 
     {
-	$this->form_validation->set_rules('designation', 'designation', 'trim|required');
-	$this->form_validation->set_rules('description', 'description', 'trim|required');
-	$this->form_validation->set_rules('num_vague', 'num vague', 'trim|required');
-	$this->form_validation->set_rules('date_debut', 'date debut', 'trim|required');
-	$this->form_validation->set_rules('date_fin', 'date fin', 'trim|required');
-	$this->form_validation->set_rules('note', 'note', 'trim|required|numeric');
-	$this->form_validation->set_rules('Niveau_Qualite', 'niveau qualite', 'trim|required');
-	$this->form_validation->set_rules('fichier_excel', 'fichier excel', 'trim|required');
-	$this->form_validation->set_rules('id_Type_Controle', 'id type controle', 'trim|required');
+	$this->form_validation->set_rules('nom', 'nom', 'trim|required');
 	$this->form_validation->set_rules('NNI', 'nni', 'trim|required');
 
 	$this->form_validation->set_rules('id_Controle', 'id_Controle', 'trim');
 	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
-    public function viewAjoutExcel()
+    public function viewUploadExcel()
     {
         $this->load->view('ajoutExcel');
     }
-    public function viewGrapheTest()
-    {
-        $this->load->view('grapheTest');
-    }
-    public function viewIframeTest()
-    {
-        $this->load->view('iframetest');
-    }
 
-    public function viewvisueltest()
+    public function viewProcessExcel(Fichier_model $fichier)
     {
-        $this->load->view('testvisuel');
-    }
-
-    public function viewProcessExcel()
-    {
-        $data = array
-        (
-            'arrayNomFeuille' => $this->getNomFeuilleExcel($_GET['idctrl']),
+        $this->load->model('Fichier_model');
+        $data = array(
+            "lastinsert" => $fichier->get_last_id(),
+            'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
         );
+        var_dump($data);
         $this->load->view('processExcel',$data);
     }
 
     public function storeExcel()
     {
         $this->load->library('excel');
-        $this->load->model("Controle_model");
+        $this->load->model("Fichier_model");
+        $fichier = new Fichier_model();
 
-        var_dump($_FILES);
         $config['upload_path'] = './uploads/';
         $config['allowed_types'] = 'xlsx';
         $config['max_size'] = '40000000';
@@ -244,19 +186,19 @@ class Controle extends CI_Controller
         } else {
             $data = $this->upload->data();
             $uploadpath = $data['full_path'];
-            $controle = new Controle_model();
-            $controle = $controle->get_by_id($this->input->post('id_Controle',TRUE));
             $name = $_FILES['fichier_xl']['name'];
-            var_dump($_FILES);
-            $data = array(
-                "fichier_excel"=>$uploadpath
+            $date = date('Y-n');
+            $insert_data = array(
+                "nom"=>$name,
+                "extension"=>$config['allowed_types'],
+                "upload_path"=>$uploadpath,
+                "annee"=>$date,
             );
-            $this->Controle_model->update($this->input->post('id_Controle',TRUE),$data);
+            $fichier->insert($insert_data);
 
-            $this->session->set_flashdata('message',"Le fichier ".$name." a été lié au contrôle ". $controle->designation);
-            redirect('index.php/controle');
+            $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
+            $this->viewProcessExcel($fichier);
 
-            return $uploadpath;
             // Transforme un excel en html
             /*
             $inputFileType = 'Excel2007';
@@ -270,84 +212,170 @@ class Controle extends CI_Controller
         }
     }
 
-    public function getNomFeuilleExcel($idctrl)
+    public function createStructure($arrayGeneral)
     {
         $this->load->library('excel');
-        $this->load->model("Controle_model");
+        $this->load->model("Fichier_model");
+        $this->load->model("Feuille_model");
+        $this->load->model("Colonne_model");
+        $this->load->model("Structure_model");
+        $this->load->model("Data_model");
 
-        $controle = new Controle_model();
-        $controle = $controle->get_by_id($idctrl);
+        $struct = new Structure_model();
+        $feuille = new Feuille_model();
+        $col = new Colonne_model();
+        $datamodel = new Data_model();
+        $previousColonne = "";
+        $DataIdArray = array();
+        foreach($arrayGeneral as $idfichier => $arrayFeuille)
+        {
+            foreach($arrayFeuille as $nomfeuille => $arrayColonne)
+            {
+                $insert_data = array(
+                    "nom"=>$nomfeuille,
+                );
+                $feuille->insert($insert_data);
+                $idFeuille = $feuille->get_last_id();
+
+                foreach($arrayColonne as $lettreColonne => $arrayLigne)
+                {
+                    foreach($arrayLigne as $numligne => $arrayData)
+                    {
+                        foreach($arrayData as $header => $valeur)
+                        {
+                            if($previousColonne != $lettreColonne)
+                            {
+                                var_dump("ok");
+                                var_dump($header);
+                                $insert_data = array(
+                                    "header"=>$header,
+                                    "lettre_excel"=>$lettreColonne,
+                                );
+                                $col->insert($insert_data);
+                                $idCol = $col->get_last_id();
+
+                                $insert_data = array(
+                                    "id_Fichier"=>$idfichier,
+                                    "id_Feuille"=>$idFeuille,
+                                    "id_Colonne"=>$idCol
+                                );
+                                $struct->insert($insert_data);
+                                $idStruct = $struct->get_last_id();
+                            }
+                            $espace = " ";
+                            var_dump($espace);
+
+
+                            $insert_data = array(
+                                "data" => $valeur,
+                                "num_ligne_excel" => $numligne,
+                                "id_Structure" => $idStruct
+                            );
+                            $datamodel->insert($insert_data);
+                            $idData = $datamodel->get_last_id();
+
+                            $previousColonne = $lettreColonne;
+                            $DataIdArray[] = $idData;
+                        }
+                    }
+                }
+            }
+        }
+        //var_dump($DataIdArray);
+    }
+
+    public function getNomFeuilleExcel($idfichier)
+    {
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+
+        $fichier = new Fichier_model();
+        $fichier = $fichier->get_by_id($idfichier);
 
         $objReader = PHPExcel_IOFactory::createReader("Excel2007");
         $objReader->setReadDataOnly(true);
-        $objPHPExcel = $objReader->load($controle->fichier_excel);
+        $objPHPExcel = $objReader->load($fichier->upload_path);
 
         $name = $objPHPExcel->getSheetNames();
-
         return $name;
     }
 
     public function ProcessExcel()
     {
-        $arraydata = $this->getDataProcess();
-        var_dump($arraydata);
+        $dataColonne = $this->getDataProcess($this->input->post('lastinsert'));
+        $arrayIdentifiant = array();
 
-
-
-
-        //Faire un array avec chaque CCS différent
-        //Faire la somme des montant pour chaque CCS
-        //Compter le nombre d'apparition de chaque CCS
-        //Checker les calculs pour chaque indicateurs - résultats
-        //
-
-        // $nbApparationCCS;
-        //$somme
+        foreach($dataColonne as $data)
+        {
+            if (!in_array($data['CCS'],$arrayIdentifiant))
+            {
+                $arrayIdentifiant[] = $data['CCS'];
+            }
+        }
+        $nbElements = count($dataColonne[0]);
+        $indice = 0;
+        foreach($arrayIdentifiant as $id)
+        {
+            foreach($dataColonne as $data)
+            {
+                //var_dump($data[1]);
+            }
+        }
 
     }
 
-    public function getDataProcess()
+
+    public function getDataProcess($lastid)
     {
         $this->load->library('excel');
-        $this->load->model("Controle_model");
-
-        $controle = new Controle_model();
-        $controle = $controle->get_by_id($this->input->post('id_Controle',TRUE));
+        $this->load->model("Fichier_model");
+        $fichier = new Fichier_model;
+        $fichier = $fichier->get_by_id($lastid);
 
         $objReader = PHPExcel_IOFactory::createReader("Excel2007");
         $objReader->setReadDataOnly(true);
-        $objPHPExcel = $objReader->load($controle->fichier_excel);
+        $objPHPExcel = $objReader->load($fichier->upload_path);
+        $arraynomfeuille = $objPHPExcel->getSheetNames();
 
+        //Nombre de champs ajoutés via le script js
         $nbtotalchamp = $this->input->post('nb_champ',TRUE);
-        $arraydata = array();
+        $inputnomfeuille = $this->input->post('nom_feuille',TRUE);
 
-        for($i=1;$i<=$nbtotalchamp;$i++)
-        {
-            $champ = $this->input->post('nom_champ_'.$i,TRUE);
-            $cellule = $this->input->post('value_'.$i,TRUE);
-            $arraydata[$champ] = $cellule;
-        }
+        $generalArray = array();
+        $arrayFeuille = array();
+        foreach ($arraynomfeuille as $nomfeuille) {
+            //TODO : Amélioration du système pour gérer plusieurs feuilles automatiquement
+            if($nomfeuille == $inputnomfeuille)
+            {
+                $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
+                $objWorksheet = $objPHPExcel->getActiveSheet();
+                $datastart = $this->input->post('datastart',TRUE);
+                $nbechant = $this->input->post('nbechant',TRUE)-1; //Plus pratique
 
-        $nomfeuille = $this->input->post('nom_feuille',TRUE);
-        $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
-        $objWorksheet = $objPHPExcel->getActiveSheet();
-
-        $datastart = $this->input->post('datastart',TRUE);
-        $nbechant = $this->input->post('nbechant',TRUE)-1; //Plus pratique
-        $arrayfulldataexcel = array();
-
-        for($z=0;$z <= $nbechant;$z++) {
-            $arraydataColonne = array();
-            foreach ($arraydata as $champ => $valeur) {
-                $nbligne = $z + $datastart;
-                $cellvalue = $objWorksheet->getCell($valeur . $nbligne)->getCalculatedValue();
-                $arraydataColonne[$champ] = $cellvalue;
+                $arrayColonne= array();
+                for($i=1;$i<=$nbtotalchamp;$i++)
+                {
+                    $header = $this->input->post('nom_champ_'.$i,TRUE);
+                    $colonnelettre = $this->input->post('value_'.$i,TRUE);
+                    $arrayLigne = array();
+                    for($z=0;$z <= $nbechant;$z++)
+                    {
+                        $arrayData = array();
+                        $numligne = $z + $datastart;
+                        var_dump($header);
+                        $arrayData[$header] =  $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
+                        $arrayLigne[$numligne] = $arrayData;
+                    }
+                    $arrayColonne[$colonnelettre] = $arrayLigne;
+                }
+                $arrayFeuille[$nomfeuille] = $arrayColonne;
             }
-            $arrayfulldataexcel[$z]= $arraydataColonne;
         }
-        return $arrayfulldataexcel;
+        $generalArray[$lastid] = $arrayFeuille;
+        return $this->createStructure($generalArray);
     }
 
+    /**
     public function ajoutExcel()
     {
         $this->load->model("Controle_model");
@@ -385,7 +413,7 @@ class Controle extends CI_Controller
             $name = $objPHPExcel->getSheetNames();
             $nombrefeuille = count($name);
 
-            /**
+
             for ($nbF = 0; $nbF < $nombrefeuille; $nbF++) {
             $objWorksheet = $objPHPExcel->getSheet($nbF);
             $row = intval($objWorksheet->getHighestDataRow());
@@ -491,18 +519,16 @@ class Controle extends CI_Controller
             }
             }
             }
-            }*/
+            }
             var_dump($data['full_path']);
 
             redirect('index.php/controle/viewAjoutExcel');
         }
-    }
-
-
+    }*/
 }
 
 /* End of file Controle.php */
 /* Location: ./application/controllers/Controle.php */
 /* Please DO NOT modify this information : */
-/* Generated by Harviacode Codeigniter CRUD Generator 2016-10-21 12:59:51 */
+/* Generated by Harviacode Codeigniter CRUD Generator 2016-10-28 15:16:08 */
 /* http://harviacode.com */

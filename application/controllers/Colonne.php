@@ -48,12 +48,10 @@ class Colonne extends CI_Controller
         $row = $this->Colonne_model->get_by_id($id);
         if ($row) {
             $data = array(
-		'id_colonne' => $row->id_colonne,
-		'nom_colonne' => $row->nom_colonne,
+		'id_Colonne' => $row->id_Colonne,
+		'header' => $row->header,
 		'lettre_excel' => $row->lettre_excel,
-		'id_data_indicateur' => $row->id_data_indicateur,
-		'id_type_colonne' => $row->id_type_colonne,
-		'id_Feuille' => $row->id_Feuille,
+		'id_Type_Colonne' => $row->id_Type_Colonne,
 	    );
             $this->load->view('colonne_read', $data);
         } else {
@@ -67,12 +65,10 @@ class Colonne extends CI_Controller
         $data = array(
             'button' => 'Create',
             'action' => site_url('colonne/create_action'),
-	    'id_colonne' => set_value('id_colonne'),
-	    'nom_colonne' => set_value('nom_colonne'),
+	    'id_Colonne' => set_value('id_Colonne'),
+	    'header' => set_value('header'),
 	    'lettre_excel' => set_value('lettre_excel'),
-	    'id_data_indicateur' => set_value('id_data_indicateur'),
-	    'id_type_colonne' => set_value('id_type_colonne'),
-	    'id_Feuille' => set_value('id_Feuille'),
+	    'id_Type_Colonne' => set_value('id_Type_Colonne'),
 	);
         $this->load->view('colonne_form', $data);
     }
@@ -85,11 +81,9 @@ class Colonne extends CI_Controller
             $this->create();
         } else {
             $data = array(
-		'nom_colonne' => $this->input->post('nom_colonne',TRUE),
+		'header' => $this->input->post('header',TRUE),
 		'lettre_excel' => $this->input->post('lettre_excel',TRUE),
-		'id_data_indicateur' => $this->input->post('id_data_indicateur',TRUE),
-		'id_type_colonne' => $this->input->post('id_type_colonne',TRUE),
-		'id_Feuille' => $this->input->post('id_Feuille',TRUE),
+		'id_Type_Colonne' => $this->input->post('id_Type_Colonne',TRUE),
 	    );
 
             $this->Colonne_model->insert($data);
@@ -106,12 +100,10 @@ class Colonne extends CI_Controller
             $data = array(
                 'button' => 'Update',
                 'action' => site_url('colonne/update_action'),
-		'id_colonne' => set_value('id_colonne', $row->id_colonne),
-		'nom_colonne' => set_value('nom_colonne', $row->nom_colonne),
+		'id_Colonne' => set_value('id_Colonne', $row->id_Colonne),
+		'header' => set_value('header', $row->header),
 		'lettre_excel' => set_value('lettre_excel', $row->lettre_excel),
-		'id_data_indicateur' => set_value('id_data_indicateur', $row->id_data_indicateur),
-		'id_type_colonne' => set_value('id_type_colonne', $row->id_type_colonne),
-		'id_Feuille' => set_value('id_Feuille', $row->id_Feuille),
+		'id_Type_Colonne' => set_value('id_Type_Colonne', $row->id_Type_Colonne),
 	    );
             $this->load->view('colonne_form', $data);
         } else {
@@ -125,17 +117,15 @@ class Colonne extends CI_Controller
         $this->_rules();
 
         if ($this->form_validation->run() == FALSE) {
-            $this->update($this->input->post('id_colonne', TRUE));
+            $this->update($this->input->post('id_Colonne', TRUE));
         } else {
             $data = array(
-		'nom_colonne' => $this->input->post('nom_colonne',TRUE),
+		'header' => $this->input->post('header',TRUE),
 		'lettre_excel' => $this->input->post('lettre_excel',TRUE),
-		'id_data_indicateur' => $this->input->post('id_data_indicateur',TRUE),
-		'id_type_colonne' => $this->input->post('id_type_colonne',TRUE),
-		'id_Feuille' => $this->input->post('id_Feuille',TRUE),
+		'id_Type_Colonne' => $this->input->post('id_Type_Colonne',TRUE),
 	    );
 
-            $this->Colonne_model->update($this->input->post('id_colonne', TRUE), $data);
+            $this->Colonne_model->update($this->input->post('id_Colonne', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('colonne'));
         }
@@ -157,13 +147,11 @@ class Colonne extends CI_Controller
 
     public function _rules() 
     {
-	$this->form_validation->set_rules('nom_colonne', 'nom colonne', 'trim|required');
+	$this->form_validation->set_rules('header', 'header', 'trim|required');
 	$this->form_validation->set_rules('lettre_excel', 'lettre excel', 'trim|required');
-	$this->form_validation->set_rules('id_data_indicateur', 'id data indicateur', 'trim|required');
-	$this->form_validation->set_rules('id_type_colonne', 'id type colonne', 'trim|required');
-	$this->form_validation->set_rules('id_Feuille', 'id feuille', 'trim|required');
+	$this->form_validation->set_rules('id_Type_Colonne', 'id type colonne', 'trim|required');
 
-	$this->form_validation->set_rules('id_colonne', 'id_colonne', 'trim');
+	$this->form_validation->set_rules('id_Colonne', 'id_Colonne', 'trim');
 	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
@@ -172,5 +160,5 @@ class Colonne extends CI_Controller
 /* End of file Colonne.php */
 /* Location: ./application/controllers/Colonne.php */
 /* Please DO NOT modify this information : */
-/* Generated by Harviacode Codeigniter CRUD Generator 2016-10-21 12:59:51 */
+/* Generated by Harviacode Codeigniter CRUD Generator 2016-10-28 15:16:08 */
 /* http://harviacode.com */

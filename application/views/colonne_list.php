@@ -44,11 +44,9 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Nom Colonne</th>
+		<th>Header</th>
 		<th>Lettre Excel</th>
-		<th>Id Data Indicateur</th>
 		<th>Id Type Colonne</th>
-		<th>Id Feuille</th>
 		<th>Action</th>
             </tr><?php
             foreach ($colonne_data as $colonne)
@@ -56,18 +54,16 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $colonne->nom_colonne ?></td>
+			<td><?php echo $colonne->header ?></td>
 			<td><?php echo $colonne->lettre_excel ?></td>
-			<td><?php echo $colonne->id_data_indicateur ?></td>
-			<td><?php echo $colonne->id_type_colonne ?></td>
-			<td><?php echo $colonne->id_Feuille ?></td>
+			<td><?php echo $colonne->id_Type_Colonne ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('colonne/read/'.$colonne->id_colonne),'Read'); 
+				echo anchor(site_url('colonne/read/'.$colonne->id_Colonne),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('colonne/update/'.$colonne->id_colonne),'Update'); 
+				echo anchor(site_url('colonne/update/'.$colonne->id_Colonne),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('colonne/delete/'.$colonne->id_colonne),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('colonne/delete/'.$colonne->id_Colonne),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

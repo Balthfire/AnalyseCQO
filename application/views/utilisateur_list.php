@@ -46,8 +46,8 @@
                 <th>No</th>
 		<th>Nom</th>
 		<th>Prenom</th>
-		<th>Password</th>
-		<th>Id Type User</th>
+		<th>Id Type Utilisateur</th>
+		<th>CCS</th>
 		<th>Action</th>
             </tr><?php
             foreach ($utilisateur_data as $utilisateur)
@@ -55,10 +55,10 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $utilisateur->Nom ?></td>
-			<td><?php echo $utilisateur->Prenom ?></td>
-			<td><?php echo $utilisateur->password ?></td>
-			<td><?php echo $utilisateur->id_Type_User ?></td>
+			<td><?php echo $utilisateur->nom ?></td>
+			<td><?php echo $utilisateur->prenom ?></td>
+			<td><?php echo $utilisateur->id_Type_Utilisateur ?></td>
+			<td><?php echo $utilisateur->CCS ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('utilisateur/read/'.$utilisateur->NNI),'Read'); 

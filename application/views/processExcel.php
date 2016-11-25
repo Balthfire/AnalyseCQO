@@ -31,7 +31,6 @@
             foreach($arrayNomFeuille as $nomFeuille )
             {
                 echo '<option value="'.$nomFeuille.'">'.$nomFeuille.'</option>';
-
             }
             echo '</select>',"\n";
         ?>
@@ -50,8 +49,9 @@
         </fieldset>
         <br/>
 
-        <input type="hidden" name="id_Controle" value="<?php echo $_GET['idctrl']; ?>" />
         <input type="hidden" name="nb_champ" id="nb_champ" value="1"/>
+        <input type="hidden" name="lastinsert" id="lastinsert" value="<?php echo $lastinsert ?>"/>
+
 
         <br /><br />
         <input type="submit" value="submit" class="btn btn-primary" />

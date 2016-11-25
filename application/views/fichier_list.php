@@ -44,8 +44,11 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Libelle</th>
-		<th>Id Controle</th>
+		<th>Nom</th>
+		<th>Extension</th>
+		<th>Conteneur</th>
+		<th>Upload Path</th>
+		<th>Annee</th>
 		<th>Action</th>
             </tr><?php
             foreach ($fichier_data as $fichier)
@@ -53,8 +56,11 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $fichier->libelle ?></td>
-			<td><?php echo $fichier->id_Controle ?></td>
+			<td><?php echo $fichier->nom ?></td>
+			<td><?php echo $fichier->extension ?></td>
+			<td><?php echo $fichier->conteneur ?></td>
+			<td><?php echo $fichier->upload_path ?></td>
+			<td><?php echo $fichier->annee ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('fichier/read/'.$fichier->id_Fichier),'Read'); 

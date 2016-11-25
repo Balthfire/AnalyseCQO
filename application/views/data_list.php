@@ -10,10 +10,10 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Indicateur List</h2>
+        <h2 style="margin-top:0px">Data List</h2>
         <div class="row" style="margin-bottom: 10px">
             <div class="col-md-4">
-                <?php echo anchor(site_url('indicateur/create'),'Create', 'class="btn btn-primary"'); ?>
+                <?php echo anchor(site_url('data/create'),'Create', 'class="btn btn-primary"'); ?>
             </div>
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
@@ -23,7 +23,7 @@
             <div class="col-md-1 text-right">
             </div>
             <div class="col-md-3 text-right">
-                <form action="<?php echo site_url('indicateur/index'); ?>" class="form-inline" method="get">
+                <form action="<?php echo site_url('data/index'); ?>" class="form-inline" method="get">
                     <div class="input-group">
                         <input type="text" class="form-control" name="q" value="<?php echo $q; ?>">
                         <span class="input-group-btn">
@@ -31,7 +31,7 @@
                                 if ($q <> '')
                                 {
                                     ?>
-                                    <a href="<?php echo site_url('indicateur'); ?>" class="btn btn-default">Reset</a>
+                                    <a href="<?php echo site_url('data'); ?>" class="btn btn-default">Reset</a>
                                     <?php
                                 }
                             ?>
@@ -44,24 +44,26 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Nom</th>
-		<th>Id Controle</th>
+		<th>Data</th>
+		<th>Num Ligne Excel</th>
+		<th>Id Structure</th>
 		<th>Action</th>
             </tr><?php
-            foreach ($indicateur_data as $indicateur)
+            foreach ($data_data as $data)
             {
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $indicateur->nom ?></td>
-			<td><?php echo $indicateur->id_Controle ?></td>
+			<td><?php echo $data->data ?></td>
+			<td><?php echo $data->num_ligne_excel ?></td>
+			<td><?php echo $data->id_Structure ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('indicateur/read/'.$indicateur->id_Indicateur),'Read'); 
+				echo anchor(site_url('data/read/'.$data->id_Data),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/update/'.$indicateur->id_Indicateur),'Update'); 
+				echo anchor(site_url('data/update/'.$data->id_Data),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/delete/'.$indicateur->id_Indicateur),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('data/delete/'.$data->id_Data),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

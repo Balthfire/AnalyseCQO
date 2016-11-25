@@ -26,9 +26,6 @@
                 <li>
                     <a href='<?php echo base_url('index.php/controle/viewIframeTest')?>'>TestIframe</a>
                 </li>
-                <li>
-                    <a href='<?php echo base_url('index.php/controle/viewvisueltest')?>'>testvisu</a>
-                </li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" aria-expanded="true" aria-haspopup="true" role="button" data-toggle="dropdown" href="">
                         Dropdown exemple
