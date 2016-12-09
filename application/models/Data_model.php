@@ -22,12 +22,60 @@ class Data_model extends CI_Model
         return $this->db->get($this->table)->result();
     }
 
+    function get_by_structure_id($struct_id)
+    {
+        $query = $this->db->query('SELECT * FROM data WHERE id_Structure ='.$struct_id);
+        return $query->result_array();
+    }
+
     // get data by id
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
     }
+
+    //TODO : rework cette fonction
+    function get_lignes($numligne,$idFeuille,$idFichier)
+    {
+        $query = $this->db->query('SELECT * FROM data WHERE num_ligne_excel='.$numligne.' AND id_Structure IN(SELECT id_Structure FROM structure WHERE id_Feuille ='.$idFeuille.' AND id_Fichier ='.$idFichier.')');
+        $resultarray = $query->result_array();
+
+        return $resultarray;
+    }
+
+
+    function get_colonne($idFichier,$idFeuille,$idColonne)
+    {
+        $query = $this->db->query('SELECT * FROM data WHERE id_Structure IN(SELECT id_Structure FROM structure WHERE id_Feuille ='.$idFeuille.' AND id_Fichier ='.$idFichier.' AND id_Colonne ='.$idColonne.')');
+        $resultarray = $query->result_array();
+
+        return $resultarray;
+
+    }
+
+    function count_nb_ligne($idstruct)
+    {
+        $query = $this->db->query('SELECT COUNT(*) as nbligne FROM data WHERE id_Structure='.$idstruct);
+        return $query->row();
+    }
+
+    function count_nb_colonne($idFichier,$idFeuille)
+    {
+        $req = "SELECT COUNT(*) as nbcol FROM structure WHERE id_Feuille= $idFeuille AND id_Fichier = $idFichier";
+        $query = $this->db->query($req);
+        return $query->row();
+    }
+
+    function count_nb_colonne2($idFeuille,$idFichier)
+    {
+        return $this->db->select('id_Structure')
+            ->from('structure')
+            ->where('id_Feuille',$idFeuille)
+            ->where('id_Fichier',$idFichier)
+            ->count_all_results();
+    }
+
 
     function get_last_id()
     {
@@ -37,10 +85,10 @@ class Data_model extends CI_Model
     // get total rows
     function total_rows($q = NULL) {
         $this->db->like('id_Data', $q);
-	$this->db->or_like('data', $q);
-	$this->db->or_like('num_ligne_excel', $q);
-	$this->db->or_like('id_Structure', $q);
-	$this->db->from($this->table);
+        $this->db->or_like('data', $q);
+        $this->db->or_like('num_ligne_excel', $q);
+        $this->db->or_like('id_Structure', $q);
+        $this->db->from($this->table);
         return $this->db->count_all_results();
     }
 

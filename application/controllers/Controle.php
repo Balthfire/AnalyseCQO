@@ -226,7 +226,7 @@ class Controle extends CI_Controller
         $col = new Colonne_model();
         $datamodel = new Data_model();
         $previousColonne = "";
-        $DataIdArray = array();
+        $StructIdArray = array();
         foreach($arrayGeneral as $idfichier => $arrayFeuille)
         {
             foreach($arrayFeuille as $nomfeuille => $arrayColonne)
@@ -245,12 +245,29 @@ class Controle extends CI_Controller
                         {
                             if($previousColonne != $lettreColonne)
                             {
-                                var_dump("ok");
-                                var_dump($header);
-                                $insert_data = array(
-                                    "header"=>$header,
-                                    "lettre_excel"=>$lettreColonne,
-                                );
+                                //TODO : mieux gérer la mise en place du type colonne
+                                switch ($header)
+                                {
+                                    case "CCS":
+                                        $insert_data = array(
+                                            "header"=>$header,
+                                            "lettre_excel"=>$lettreColonne,
+                                            "id_type_colonne"=>1);
+                                        break;
+                                    case "Montant":
+                                        $insert_data = array(
+                                            "header"=>$header,
+                                            "lettre_excel"=>$lettreColonne,
+                                            "id_type_colonne"=>2);
+                                        break;
+                                    case "Champ KO":
+                                        $insert_data = array(
+                                            "header"=>$header,
+                                            "lettre_excel"=>$lettreColonne,
+                                            "id_type_colonne"=>3);
+                                        break;
+                                }
+
                                 $col->insert($insert_data);
                                 $idCol = $col->get_last_id();
 
@@ -261,27 +278,23 @@ class Controle extends CI_Controller
                                 );
                                 $struct->insert($insert_data);
                                 $idStruct = $struct->get_last_id();
+                                $StructIdArray[] = $idStruct;
                             }
-                            $espace = " ";
-                            var_dump($espace);
-
 
                             $insert_data = array(
                                 "data" => $valeur,
                                 "num_ligne_excel" => $numligne,
                                 "id_Structure" => $idStruct
-                            );
+                                );
                             $datamodel->insert($insert_data);
                             $idData = $datamodel->get_last_id();
-
                             $previousColonne = $lettreColonne;
-                            $DataIdArray[] = $idData;
                         }
                     }
                 }
             }
         }
-        //var_dump($DataIdArray);
+        return($StructIdArray);
     }
 
     public function getNomFeuilleExcel($idfichier)
@@ -302,29 +315,75 @@ class Controle extends CI_Controller
 
     public function ProcessExcel()
     {
-        $dataColonne = $this->getDataProcess($this->input->post('lastinsert'));
-        $arrayIdentifiant = array();
+        $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
+        $SortedCCS = $this->TriCCS($StructIdArray);
 
-        foreach($dataColonne as $data)
-        {
-            if (!in_array($data['CCS'],$arrayIdentifiant))
-            {
-                $arrayIdentifiant[] = $data['CCS'];
-            }
-        }
-        $nbElements = count($dataColonne[0]);
-        $indice = 0;
-        foreach($arrayIdentifiant as $id)
-        {
-            foreach($dataColonne as $data)
-            {
-                //var_dump($data[1]);
-            }
-        }
+
+
+
 
     }
 
+    // Retourne un Array contenant les CCS ainsi que leur(s) ligne(s) correspondante(s)
+    public function TriCCS($StructIdArray)
+    {
+        $this->load->model("Type_colonne_model");
+        $typecolmodel = new Type_colonne_model();
+        $datamodel = new Data_model();
+        $structmodel = new Structure_model();
+        $colonnemodel = new Colonne_model();
 
+        $ArrayNumLigne = array();
+        $ArrayDetails = array();
+        $CCSDistinct = array();
+        foreach($StructIdArray as $idStruct)
+        {
+            $struct = $structmodel->get_by_id($idStruct);
+            $idFichier = $struct->id_Fichier;
+            $idFeuille = $struct->id_Feuille;
+            $idColonne = $struct->id_Colonne;
+            $col = $colonnemodel->get_by_id($struct->id_Colonne);
+
+            $ArrayColonne = $datamodel->get_colonne($idFichier,$idFeuille,$idColonne);
+            $TypeCol = $typecolmodel->get_by_id($col->id_Type_Colonne);
+
+            //TODO : mieux gérer les types colonne
+            if(!is_null($TypeCol))
+            {
+                if ($TypeCol->nom == "identifiant")
+                {
+                    foreach ($ArrayColonne as $col)
+                    {
+                        $ArrayNumLigne[] = $col['num_ligne_excel'];
+                        $ArrayNumLigne[] = $col['data'];
+
+                        if(!array_key_exists($col['data'],$CCSDistinct))
+                            $CCSDistinct[$col['data']] = $ArrayDetails;
+                    }
+
+                    foreach($CCSDistinct as $CCS => $dataCCS)
+                    {
+                        $ArrayLigne = array();
+                        for($i=1;$i<=count($ArrayNumLigne);$i++)
+                        {
+                            if(($i%2)==1)
+                            {
+                                if($CCS == $ArrayNumLigne[$i])
+                                {
+                                    $ArrayLigne[] = $ArrayNumLigne[$i-1];
+                                    $CCSDistinct[$CCS]['ligne'] = $ArrayLigne;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return($CCSDistinct);
+    }
+
+    // Script pour récupérer les données contenu dans le dernier fichier excel intégré à la bdd
+    // en fonction des informations passées en paramètres
     public function getDataProcess($lastid)
     {
         $this->load->library('excel');
@@ -362,9 +421,18 @@ class Controle extends CI_Controller
                     {
                         $arrayData = array();
                         $numligne = $z + $datastart;
-                        var_dump($header);
-                        $arrayData[$header] =  $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
-                        $arrayLigne[$numligne] = $arrayData;
+                        $valeur = $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
+                        $Strvaleur = strval($valeur);
+                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
+                        {
+                            $arrayData[$header] = $valeur;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
+                        else
+                        {
+                            $arrayData[$header] = 0;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
                     }
                     $arrayColonne[$colonnelettre] = $arrayLigne;
                 }
