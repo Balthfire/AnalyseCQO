@@ -18,6 +18,8 @@
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
                     <?php echo $this->session->userdata('message') <> '' ? $this->session->userdata('message') : ''; ?>
+                    <?php echo $this->session->userdata('message') <> '' ? $this->session->userdata('status') : ''; ?>
+
                 </div>
             </div>
             <div class="col-md-1 text-right">

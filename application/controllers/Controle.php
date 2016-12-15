@@ -164,53 +164,79 @@ class Controle extends CI_Controller
         $this->load->view('processExcel',$data);
     }
 
-    public function storeExcel()
+    //Process suivit lors de l'upload d'un fichier
+    public function ProcessExcel()
+    {
+        set_time_limit(0);
+        $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
+        $SortedCCS = $this->TriCCS($StructIdArray);
+        $this->FinalResult($SortedCCS);
+    }
+
+    //Récupère les données contenu dans le fichier excel en fonction des paramètres donnés par l'utilisateur
+    //Envoi un Array contenant toute les données à intégré à la BDD à la fonction createstructure
+    //@param : lastid - Dernier id de fichier entré en base de donné par la fonction StoreExcel()
+    public function getDataProcess($lastid)
     {
         $this->load->library('excel');
         $this->load->model("Fichier_model");
-        $fichier = new Fichier_model();
+        $fichier = new Fichier_model;
+        $fichier = $fichier->get_by_id($lastid);
 
-        $config['upload_path'] = './uploads/';
-        $config['allowed_types'] = 'xlsx';
-        $config['max_size'] = '40000000';
-        $config['encrypt_name'] = false;
-        $this->load->library('upload', $config);
-        $this->upload->initialize($config);
+        $objReader = PHPExcel_IOFactory::createReader("Excel2007");
+        $objReader->setReadDataOnly(true);
+        $objPHPExcel = $objReader->load($fichier->upload_path);
+        $arraynomfeuille = $objPHPExcel->getSheetNames();
 
-        if (!$this->upload->do_upload('fichier_xl')) {
-            $this->session->set_flashdata('status', '<div class="alert alert-danger">' . $this->upload->display_errors() . '</div>');
-            $this->session->set_flashdata('message', 'Nope');
+        //Nombre de champs ajoutés via le script js
+        $nbtotalchamp = $this->input->post('nb_champ',TRUE);
+        $inputnomfeuille = $this->input->post('nom_feuille',TRUE);
 
-            redirect(site_url('index.php/controle'));
-        } else {
-            $data = $this->upload->data();
-            $uploadpath = $data['full_path'];
-            $name = $_FILES['fichier_xl']['name'];
-            $date = date('Y-n');
-            $insert_data = array(
-                "nom"=>$name,
-                "extension"=>$config['allowed_types'],
-                "upload_path"=>$uploadpath,
-                "annee"=>$date,
-            );
-            $fichier->insert($insert_data);
+        $generalArray = array();
+        $arrayFeuille = array();
+        foreach ($arraynomfeuille as $nomfeuille) {
+            //TODO : Amélioration du système pour gérer plusieurs feuilles automatiquement
+            if($nomfeuille == $inputnomfeuille)
+            {
+                $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
+                $objWorksheet = $objPHPExcel->getActiveSheet();
+                $datastart = $this->input->post('datastart',TRUE);
+                $nbechant = $this->input->post('nbechant',TRUE)-1; //Plus pratique
 
-            $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
-            $this->viewProcessExcel($fichier);
-
-            // Transforme un excel en html
-            /*
-            $inputFileType = 'Excel2007';
-            $inputFileName = $uploadpath;
-            $outputFileType = 'HTML';
-            $outputFileName = './uploads/test.html';
-            $objPHPExcelReader = PHPExcel_IOFactory::createReader($inputFileType);
-            $objPHPExcel = $objPHPExcelReader->load($inputFileName);
-            $objPHPExcelWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,$outputFileType);
-            $objPHPExcel = $objPHPExcelWriter->save($outputFileName);*/
+                $arrayColonne= array();
+                for($i=1;$i<=$nbtotalchamp;$i++)
+                {
+                    $header = $this->input->post('nom_champ_'.$i,TRUE);
+                    $colonnelettre = $this->input->post('value_'.$i,TRUE);
+                    $arrayLigne = array();
+                    for($z=0;$z <= $nbechant;$z++)
+                    {
+                        $arrayData = array();
+                        $numligne = $z + $datastart;
+                        $valeur = $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
+                        $Strvaleur = strval($valeur);
+                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
+                        {
+                            $arrayData[$header] = $valeur;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
+                        else
+                        {
+                            $arrayData[$header] = 0;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
+                    }
+                    $arrayColonne[$colonnelettre] = $arrayLigne;
+                }
+                $arrayFeuille[$nomfeuille] = $arrayColonne;
+            }
         }
+        $generalArray[$lastid] = $arrayFeuille;
+        return $this->createStructure($generalArray);
     }
 
+    //Insère les données passées en paramètre dans la BDD et retourne un Array des ID structures créés.
+    //@param : arrayGeneral - Contient les données du extraite du fichier Excel
     public function createStructure($arrayGeneral)
     {
         $this->load->library('excel');
@@ -284,7 +310,7 @@ class Controle extends CI_Controller
                                 "data" => $valeur,
                                 "num_ligne_excel" => $numligne,
                                 "id_Structure" => $idStruct
-                                );
+                            );
                             $datamodel->insert($insert_data);
                             $idData = $datamodel->get_last_id();
                             $previousColonne = $lettreColonne;
@@ -296,67 +322,9 @@ class Controle extends CI_Controller
         return($StructIdArray);
     }
 
-    public function getNomFeuilleExcel($idfichier)
-    {
-        $this->load->library('excel');
-        $this->load->model("Fichier_model");
-
-        $fichier = new Fichier_model();
-        $fichier = $fichier->get_by_id($idfichier);
-
-        $objReader = PHPExcel_IOFactory::createReader("Excel2007");
-        $objReader->setReadDataOnly(true);
-        $objPHPExcel = $objReader->load($fichier->upload_path);
-
-        $name = $objPHPExcel->getSheetNames();
-        return $name;
-    }
-
-    public function ProcessExcel()
-    {
-        $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
-        $SortedCCS = $this->TriCCS($StructIdArray);
-
-        $MontantParCCS = array();
-        $KOParCCS = array();
-        foreach ($SortedCCS as $CCS => $ArrayLigne)
-        {
-
-            foreach ($ArrayLigne as $numligne => $ArrayColonne)
-            {
-
-                foreach($ArrayColonne as $header => $ArrayMedium)
-                {
-                    switch($header) {
-                        case 'Montant':
-                            foreach ($ArrayMedium as $indice => $ArrayData)
-                            {
-                                if (array_key_exists($CCS,$MontantParCCS))
-                                    $MontantParCCS[$CCS] = $MontantParCCS[$CCS] + abs(floatval($ArrayData['data']));
-                                else
-                                    $MontantParCCS[$CCS] = abs(floatval($ArrayData['data']));
-
-                            }
-                            break;
-                        case 'Champ KO':
-                            foreach ($ArrayMedium as $indice => $ArrayData)
-                            {
-                                if (array_key_exists($CCS,$KOParCCS))
-                                    $KOParCCS[$CCS] = $KOParCCS[$CCS] + abs(floatval($ArrayData['data']));
-                                else
-                                    $KOParCCS[$CCS] = abs(floatval($ArrayData['data']));
-                            }
-                            break;
-                    }
-                }
-            }
-        }
-
-        var_dump($MontantParCCS);
-        var_dump($KOParCCS);
-    }
-
-    // Retourne un Array contenant les CCS ainsi que leur(s) ligne(s) correspondante(s)
+    //Parcour des différentes données colonnes identifiantes (Actuellement, en fonction du CCS -> Colonne/TypeColonne non géré dynamiquement)
+    //et création d'un Array contenant chaque identifiant distinct.
+    //@param : StructIdArray - Array de clé structure
     public function TriCCS($StructIdArray)
     {
         $this->load->model("Type_colonne_model");
@@ -414,6 +382,7 @@ class Controle extends CI_Controller
         return($this->getDataParCCS($CCSDistinct,$idFeuille,$idFichier));
     }
 
+    //
     public function getDataParCCS($CCSArray,$idFeuille,$idFichier)
     {
         $typecolmodel = new Type_colonne_model();
@@ -425,13 +394,13 @@ class Controle extends CI_Controller
         $ArrayIdTriColonne = array();
         foreach($ArrayIdTotalColonne as $ArrayColonne)
         {
-                $col = $colmodel->get_by_id($ArrayColonne['id_Colonne']);
-                $typecol = $typecolmodel->get_by_id($col->id_Type_Colonne);
-                //TODO Gérér dynamiquement les colonnes et leur nom --> NE marche pas pour le moment
-                if($typecol->nom != "CCS")
-                {
-                    $ArrayIdTriColonne[] = $ArrayColonne['id_Colonne'];
-                }
+            $col = $colmodel->get_by_id($ArrayColonne['id_Colonne']);
+            $typecol = $typecolmodel->get_by_id($col->id_Type_Colonne);
+            //TODO Gérér dynamiquement les colonnes et leur nom --> NE marche pas pour le moment
+            if($typecol->nom != "CCS")
+            {
+                $ArrayIdTriColonne[] = $ArrayColonne['id_Colonne'];
+            }
         }
         $DataArray = array();
         foreach($CCSArray as $CCS => $ArrayLigne)
@@ -454,66 +423,116 @@ class Controle extends CI_Controller
         return($DataArray);
     }
 
-    // Script pour récupérer les données contenu dans le dernier fichier excel intégré à la bdd
-    // en fonction des informations passées en paramètres
-    public function getDataProcess($lastid)
+    public function FinalResult($SortedCCS)
+    {
+        $ArrayResult = array();
+        $MontantParCCS = array();
+        $KOParCCS = array();
+        foreach ($SortedCCS as $CCS => $ArrayLigne)
+        {
+            foreach ($ArrayLigne as $numligne => $ArrayColonne)
+            {
+                foreach($ArrayColonne as $header => $ArrayMedium)
+                {
+                    switch($header) {
+                        case 'Montant':
+                            foreach ($ArrayMedium as $indice => $ArrayData)
+                            {
+                                if (array_key_exists($CCS,$MontantParCCS))
+                                    $MontantParCCS[$CCS] = $MontantParCCS[$CCS] + abs(floatval($ArrayData['data']));
+                                else
+                                    $MontantParCCS[$CCS] = abs(floatval($ArrayData['data']));
+                            }
+                            break;
+                        case 'Champ KO':
+                            foreach ($ArrayMedium as $indice => $ArrayData)
+                            {
+                                if (array_key_exists($CCS,$KOParCCS))
+                                    $KOParCCS[$CCS] = $KOParCCS[$CCS] + abs(floatval($ArrayData['data']));
+                                else
+                                    $KOParCCS[$CCS] = abs(floatval($ArrayData['data']));
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+        $ArrayResult[] = $MontantParCCS;
+        $ArrayResult[] = $KOParCCS;
+        return($ArrayResult);
+    }
+
+    public function storeExcel()
+    {
+        set_time_limit(0);
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+        $fichier = new Fichier_model();
+
+        $input = 'fichier_xl';
+        $config['upload_path'] = './uploads/';
+        $config['allowed_types'] = 'xlsx';
+        $config['max_size'] = '400000000000000000000';
+        $config['encrypt_name'] = false;
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+
+        if (!$this->upload->do_upload($input))
+        {
+            $this->session->set_flashdata('status', '<div class="alert alert-danger">' . $this->upload->display_errors() . '</div>');
+            $this->session->set_flashdata('message', 'Nope');
+            //$this->session->set_flashdata('message', $this->input->post($input));
+            redirect(site_url('index.php/controle'));
+        }
+        else
+        {
+            $data = $this->upload->data();
+            $uploadpath = $data['full_path'];
+            $name = $_FILES['fichier_xl']['name'];
+            $date = date('Y-n');
+            $insert_data = array(
+                "nom"=>$name,
+                "extension"=>$config['allowed_types'],
+                "upload_path"=>$uploadpath,
+                "annee"=>$date,
+            );
+            $fichier->insert($insert_data);
+
+            $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
+            $this->viewProcessExcel($fichier);
+
+            // Transforme un excel en html
+            /*
+            $inputFileType = 'Excel2007';
+            $inputFileName = $uploadpath;
+            $outputFileType = 'HTML';
+            $outputFileName = './uploads/test.html';
+            $objPHPExcelReader = PHPExcel_IOFactory::createReader($inputFileType);
+            $objPHPExcel = $objPHPExcelReader->load($inputFileName);
+            $objPHPExcelWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,$outputFileType);
+            $objPHPExcel = $objPHPExcelWriter->save($outputFileName);*/
+        }
+    }
+
+
+
+    public function getNomFeuilleExcel($idfichier)
     {
         $this->load->library('excel');
         $this->load->model("Fichier_model");
-        $fichier = new Fichier_model;
-        $fichier = $fichier->get_by_id($lastid);
+
+        $fichier = new Fichier_model();
+        $fichier = $fichier->get_by_id($idfichier);
 
         $objReader = PHPExcel_IOFactory::createReader("Excel2007");
         $objReader->setReadDataOnly(true);
         $objPHPExcel = $objReader->load($fichier->upload_path);
-        $arraynomfeuille = $objPHPExcel->getSheetNames();
 
-        //Nombre de champs ajoutés via le script js
-        $nbtotalchamp = $this->input->post('nb_champ',TRUE);
-        $inputnomfeuille = $this->input->post('nom_feuille',TRUE);
-
-        $generalArray = array();
-        $arrayFeuille = array();
-        foreach ($arraynomfeuille as $nomfeuille) {
-            //TODO : Amélioration du système pour gérer plusieurs feuilles automatiquement
-            if($nomfeuille == $inputnomfeuille)
-            {
-                $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
-                $objWorksheet = $objPHPExcel->getActiveSheet();
-                $datastart = $this->input->post('datastart',TRUE);
-                $nbechant = $this->input->post('nbechant',TRUE)-1; //Plus pratique
-
-                $arrayColonne= array();
-                for($i=1;$i<=$nbtotalchamp;$i++)
-                {
-                    $header = $this->input->post('nom_champ_'.$i,TRUE);
-                    $colonnelettre = $this->input->post('value_'.$i,TRUE);
-                    $arrayLigne = array();
-                    for($z=0;$z <= $nbechant;$z++)
-                    {
-                        $arrayData = array();
-                        $numligne = $z + $datastart;
-                        $valeur = $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
-                        $Strvaleur = strval($valeur);
-                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
-                        {
-                            $arrayData[$header] = $valeur;
-                            $arrayLigne[$numligne] = $arrayData;
-                        }
-                        else
-                        {
-                            $arrayData[$header] = 0;
-                            $arrayLigne[$numligne] = $arrayData;
-                        }
-                    }
-                    $arrayColonne[$colonnelettre] = $arrayLigne;
-                }
-                $arrayFeuille[$nomfeuille] = $arrayColonne;
-            }
-        }
-        $generalArray[$lastid] = $arrayFeuille;
-        return $this->createStructure($generalArray);
+        $name = $objPHPExcel->getSheetNames();
+        return $name;
     }
+
+
 
     /**
     public function ajoutExcel()
