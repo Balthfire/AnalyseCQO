@@ -161,7 +161,6 @@ class Controle extends CI_Controller
             "lastinsert" => $fichier->get_last_id(),
             'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
         );
-        var_dump($data);
         $this->load->view('processExcel',$data);
     }
 
@@ -318,10 +317,43 @@ class Controle extends CI_Controller
         $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
         $SortedCCS = $this->TriCCS($StructIdArray);
 
+        $MontantParCCS = array();
+        $KOParCCS = array();
+        foreach ($SortedCCS as $CCS => $ArrayLigne)
+        {
 
+            foreach ($ArrayLigne as $numligne => $ArrayColonne)
+            {
 
+                foreach($ArrayColonne as $header => $ArrayMedium)
+                {
+                    switch($header) {
+                        case 'Montant':
+                            foreach ($ArrayMedium as $indice => $ArrayData)
+                            {
+                                if (array_key_exists($CCS,$MontantParCCS))
+                                    $MontantParCCS[$CCS] = $MontantParCCS[$CCS] + abs(floatval($ArrayData['data']));
+                                else
+                                    $MontantParCCS[$CCS] = abs(floatval($ArrayData['data']));
 
+                            }
+                            break;
+                        case 'Champ KO':
+                            foreach ($ArrayMedium as $indice => $ArrayData)
+                            {
+                                if (array_key_exists($CCS,$KOParCCS))
+                                    $KOParCCS[$CCS] = $KOParCCS[$CCS] + abs(floatval($ArrayData['data']));
+                                else
+                                    $KOParCCS[$CCS] = abs(floatval($ArrayData['data']));
+                            }
+                            break;
+                    }
+                }
+            }
+        }
 
+        var_dump($MontantParCCS);
+        var_dump($KOParCCS);
     }
 
     // Retourne un Array contenant les CCS ainsi que leur(s) ligne(s) correspondante(s)
@@ -379,7 +411,47 @@ class Controle extends CI_Controller
                 }
             }
         }
-        return($CCSDistinct);
+        return($this->getDataParCCS($CCSDistinct,$idFeuille,$idFichier));
+    }
+
+    public function getDataParCCS($CCSArray,$idFeuille,$idFichier)
+    {
+        $typecolmodel = new Type_colonne_model();
+        $colmodel = new Colonne_model();
+        $structmodel = new Structure_model();
+        $datamodel = new Data_model();
+
+        $ArrayIdTotalColonne = $structmodel->get_other_columns($idFichier,$idFeuille);
+        $ArrayIdTriColonne = array();
+        foreach($ArrayIdTotalColonne as $ArrayColonne)
+        {
+                $col = $colmodel->get_by_id($ArrayColonne['id_Colonne']);
+                $typecol = $typecolmodel->get_by_id($col->id_Type_Colonne);
+                //TODO Gérér dynamiquement les colonnes et leur nom --> NE marche pas pour le moment
+                if($typecol->nom != "CCS")
+                {
+                    $ArrayIdTriColonne[] = $ArrayColonne['id_Colonne'];
+                }
+        }
+        $DataArray = array();
+        foreach($CCSArray as $CCS => $ArrayLigne)
+        {
+            $LineArray = array();
+            for($i=0;$i<=count($ArrayLigne['ligne'])-1;$i++)
+            {
+                $Data =array();
+                foreach($ArrayIdTriColonne as $indice => $idColonne)
+                {
+                    $col = $colmodel->get_by_id($idColonne);
+                    $ArrayNumLigne = $ArrayLigne['ligne'];
+                    $numligne = $ArrayNumLigne[$i];
+                    $Data[$col->header] = $datamodel->get_specific_data($numligne,$idFeuille,$idFichier,$idColonne);
+                    $LineArray[$numligne] = $Data;
+                }
+            }
+            $DataArray[$CCS] = $LineArray;
+        }
+        return($DataArray);
     }
 
     // Script pour récupérer les données contenu dans le dernier fichier excel intégré à la bdd

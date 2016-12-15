@@ -35,7 +35,6 @@ class Data_model extends CI_Model
         return $this->db->get($this->table)->row();
     }
 
-    //TODO : rework cette fonction
     function get_lignes($numligne,$idFeuille,$idFichier)
     {
         $query = $this->db->query('SELECT * FROM data WHERE num_ligne_excel='.$numligne.' AND id_Structure IN(SELECT id_Structure FROM structure WHERE id_Feuille ='.$idFeuille.' AND id_Fichier ='.$idFichier.')');
@@ -44,14 +43,19 @@ class Data_model extends CI_Model
         return $resultarray;
     }
 
+    function get_specific_data($numligne,$idFeuille,$idFichier,$idColonne)
+    {
+        $query = $this->db->query('SELECT * FROM data WHERE num_ligne_excel='.$numligne.' AND id_Structure IN(SELECT id_Structure FROM structure WHERE id_Feuille ='.$idFeuille.' AND id_Fichier ='.$idFichier.' AND id_Colonne ='.$idColonne.')');
+        $resultarray = $query->result_array();
+        return $resultarray;
+    }
+
 
     function get_colonne($idFichier,$idFeuille,$idColonne)
     {
         $query = $this->db->query('SELECT * FROM data WHERE id_Structure IN(SELECT id_Structure FROM structure WHERE id_Feuille ='.$idFeuille.' AND id_Fichier ='.$idFichier.' AND id_Colonne ='.$idColonne.')');
         $resultarray = $query->result_array();
-
         return $resultarray;
-
     }
 
     function count_nb_ligne($idstruct)
