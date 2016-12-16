@@ -154,6 +154,105 @@ class Controle extends CI_Controller
         $this->load->view('ajoutExcel');
     }
 
+    public function viewUploadCCS()
+    {
+        $this->load->view('viewUploadCCS');
+    }
+
+    public function viewProcessExcelCCS(Fichier_model $fichier)
+    {
+        $this->load->model('Fichier_model');
+        $data = array(
+            "lastinsert" => $fichier->get_last_id(),
+            'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
+        );
+        $this->load->view('viewAjoutCCS',$data);
+    }
+
+    public function ProcessCCS()
+    {
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+        $this->load->model("Agence_model");
+
+        $fichier = new Fichier_model;
+        $fichier = $fichier->get_by_id($this->input->post('lastinsert'));
+        $objReader = PHPExcel_IOFactory::createReader("Excel2007");
+        $objReader->setReadDataOnly(true);
+        $objPHPExcel = $objReader->load($fichier->upload_path);
+        $arraynomfeuille = $objPHPExcel->getSheetNames();
+
+        //Nombre de champs ajoutés via le script js
+        $nbtotalchamp = $this->input->post('nb_champ',TRUE);
+        $inputnomfeuille = $this->input->post('nom_feuille',TRUE);
+
+        $generalArray = array();
+        $arrayFeuille = array();
+        foreach ($arraynomfeuille as $nomfeuille) {
+            //TODO : Amélioration du système pour gérer plusieurs feuilles automatiquement
+            if($nomfeuille == $inputnomfeuille)
+            {
+                $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
+                $objWorksheet = $objPHPExcel->getActiveSheet();
+                $datastart = $this->input->post('datastart',TRUE);
+                $nbechant = $this->input->post('nbechant',TRUE)-1; //Plus pratique
+
+                $arrayColonne= array();
+                for($i=1;$i<=$nbtotalchamp;$i++)
+                {
+                    $header = $this->input->post('nom_champ_'.$i,TRUE);
+                    $colonnelettre = $this->input->post('value_'.$i,TRUE);
+                    $arrayLigne = array();
+                    for($z=0;$z <= $nbechant;$z++)
+                    {
+                        $arrayData = array();
+                        $numligne = $z + $datastart;
+                        $valeur = $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
+                        $Strvaleur = strval($valeur);
+                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
+                        {
+                            $arrayData[$header] = $valeur;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
+                        else
+                        {
+                            $arrayData[$header] = 0;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
+                    }
+
+                    $arrayColonne[$colonnelettre] = $arrayLigne;
+                }
+                $arrayFeuille[$nomfeuille] = $arrayColonne;
+            }
+        }
+        $generalArray[$this->input->post('lastinsert')] = $arrayFeuille;
+
+
+        $Agencemodel = new Agence_model();
+        foreach($generalArray as $idfichier => $Array)
+        {
+            foreach($Array as $feuille => $Array2)
+            {
+                $ColonneA = $Array2['A'];
+                $ColonneD = $Array2['D'];
+                $ColonneE = $Array2['E'];
+                $ColonneF = $Array2['F'];
+                for($i=$datastart;$i<=750+$datastart;$i++)
+                {
+                    $insertdata = array(
+                        'CCS' => $ColonneA[$i]['CCS'],
+                        'DUM' => $ColonneD[$i]['Service'],
+                        'SDUM' => $ColonneE[$i]['Service2'],
+                        'nom' => $ColonneF[$i]['Agence'],
+                    );
+
+                    $Agencemodel->insert($insertdata);
+                }
+            }
+        }
+    }
+
     public function viewProcessExcel(Fichier_model $fichier)
     {
         $this->load->model('Fichier_model');
@@ -164,13 +263,13 @@ class Controle extends CI_Controller
         $this->load->view('processExcel',$data);
     }
 
-    //Process suivit lors de l'upload d'un fichier
+    //Process suivit lors de l'upload d'un fichier excel
     public function ProcessExcel()
     {
         set_time_limit(0);
         $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
         $SortedCCS = $this->TriCCS($StructIdArray);
-        $this->FinalResult($SortedCCS);
+        $this->CalculSommeParCCS($SortedCCS);
     }
 
     //Récupère les données contenu dans le fichier excel en fonction des paramètres donnés par l'utilisateur
@@ -382,7 +481,7 @@ class Controle extends CI_Controller
         return($this->getDataParCCS($CCSDistinct,$idFeuille,$idFichier));
     }
 
-    //
+    //Retourne un array contenant les données de chaque ligne pour chaque CCS
     public function getDataParCCS($CCSArray,$idFeuille,$idFichier)
     {
         $typecolmodel = new Type_colonne_model();
@@ -423,13 +522,21 @@ class Controle extends CI_Controller
         return($DataArray);
     }
 
-    public function FinalResult($SortedCCS)
+    //Retourne un array contenant les sommes de chacune des colonnes organisé par CCS
+    //Ajoute un array contenant les noms d'agence correspondant au CCS
+    public function CalculSommeParCCS($SortedCCS)
     {
+        $this->load->model("Agence_model");
+        $AgenceModel = new Agence_model();
         $ArrayResult = array();
         $MontantParCCS = array();
         $KOParCCS = array();
+        $CCStoName = array();
         foreach ($SortedCCS as $CCS => $ArrayLigne)
         {
+            $Agence = $AgenceModel->get_by_id($CCS);
+            $CCStoName[$CCS] = $Agence->nom;
+
             foreach ($ArrayLigne as $numligne => $ArrayColonne)
             {
                 foreach($ArrayColonne as $header => $ArrayMedium)
@@ -459,6 +566,8 @@ class Controle extends CI_Controller
         }
         $ArrayResult[] = $MontantParCCS;
         $ArrayResult[] = $KOParCCS;
+        $ArrayResult[] = $CCStoName;
+        var_dump($CCStoName);
         return($ArrayResult);
     }
 
@@ -514,7 +623,57 @@ class Controle extends CI_Controller
         }
     }
 
+    public function storeExcelCCS()
+    {
+        set_time_limit(0);
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+        $fichier = new Fichier_model();
 
+        $input = 'fichier_xl';
+        $config['upload_path'] = './uploads/';
+        $config['allowed_types'] = 'xlsx';
+        $config['max_size'] = '400000000000000000000';
+        $config['encrypt_name'] = false;
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+
+        if (!$this->upload->do_upload($input))
+        {
+            $this->session->set_flashdata('status', '<div class="alert alert-danger">' . $this->upload->display_errors() . '</div>');
+            $this->session->set_flashdata('message', 'Nope');
+            //$this->session->set_flashdata('message', $this->input->post($input));
+            redirect(site_url('index.php/controle'));
+        }
+        else
+        {
+            $data = $this->upload->data();
+            $uploadpath = $data['full_path'];
+            $name = $_FILES['fichier_xl']['name'];
+            $date = date('Y-n');
+            $insert_data = array(
+                "nom"=>$name,
+                "extension"=>$config['allowed_types'],
+                "upload_path"=>$uploadpath,
+                "annee"=>$date,
+            );
+            $fichier->insert($insert_data);
+
+            $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
+            $this->viewProcessExcelCCS($fichier);
+
+            // Transforme un excel en html
+            /*
+            $inputFileType = 'Excel2007';
+            $inputFileName = $uploadpath;
+            $outputFileType = 'HTML';
+            $outputFileName = './uploads/test.html';
+            $objPHPExcelReader = PHPExcel_IOFactory::createReader($inputFileType);
+            $objPHPExcel = $objPHPExcelReader->load($inputFileName);
+            $objPHPExcelWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,$outputFileType);
+            $objPHPExcel = $objPHPExcelWriter->save($outputFileName);*/
+        }
+    }
 
     public function getNomFeuilleExcel($idfichier)
     {

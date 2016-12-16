@@ -45,6 +45,9 @@
             <tr>
                 <th>No</th>
 		<th>Nom</th>
+		<th>DUM</th>
+		<th>SDUM</th>
+		<th>Portefeuille</th>
 		<th>Action</th>
             </tr><?php
             foreach ($agence_data as $agence)
@@ -53,6 +56,9 @@
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
 			<td><?php echo $agence->nom ?></td>
+			<td><?php echo $agence->DUM ?></td>
+			<td><?php echo $agence->SDUM ?></td>
+			<td><?php echo $agence->portefeuille ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('agence/read/'.$agence->CCS),'Read'); 

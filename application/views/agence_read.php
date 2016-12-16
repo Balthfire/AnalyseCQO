@@ -13,6 +13,9 @@
         <h2 style="margin-top:0px">Agence Read</h2>
         <table class="table">
 	    <tr><td>Nom</td><td><?php echo $nom; ?></td></tr>
+	    <tr><td>DUM</td><td><?php echo $DUM; ?></td></tr>
+	    <tr><td>SDUM</td><td><?php echo $SDUM; ?></td></tr>
+	    <tr><td>Portefeuille</td><td><?php echo $portefeuille; ?></td></tr>
 	    <tr><td></td><td><a href="<?php echo site_url('agence') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>

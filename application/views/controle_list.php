@@ -62,6 +62,8 @@
                 echo anchor(site_url('index.php/controle/delete/'.$controle->id_Controle),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                 echo ' | ';
                 echo anchor(site_url('index.php/controle/viewUploadExcel?idctrl='.$controle->id_Controle),'Excel');
+                echo ' | ';
+                echo anchor(site_url('index.php/controle/viewUploadExcel?idctrl='.$controle->id_Controle),'Tableau');
                 ?>
             </td>
 			<td><?php echo $controle->nom ?></td>

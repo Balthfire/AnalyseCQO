@@ -18,7 +18,7 @@
                     <a href='<?php echo base_url('index.php/controle')?>'>Liste Controle</a>
                 </li>
                 <li>
-                    <a href='<?php echo base_url('index.php/controle/viewAjoutExcel')?>'>Ajout Excel</a>
+                    <a href='<?php echo base_url('index.php/controle/viewUploadCCS')?>'>Ajout CCS</a>
                 </li>
                 <li>
                     <a href='<?php echo base_url('index.php/controle/viewGrapheTest')?>'>AjoutGraph</a>
@@ -26,6 +26,7 @@
                 <li>
                     <a href='<?php echo base_url('index.php/controle/viewIframeTest')?>'>TestIframe</a>
                 </li>
+
                 <li class="dropdown">
                     <a class="dropdown-toggle" aria-expanded="true" aria-haspopup="true" role="button" data-toggle="dropdown" href="">
                         Dropdown exemple
