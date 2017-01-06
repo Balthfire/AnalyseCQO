@@ -271,6 +271,7 @@ class Controle extends CI_Controller
     //Process suivit lors de l'upload d'un fichier excel
     public function ProcessExcel()
     {
+
         set_time_limit(0);
         $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
         $SortedCCS = $this->TriCCS($StructIdArray);
@@ -305,7 +306,8 @@ class Controle extends CI_Controller
                 $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
                 $objWorksheet = $objPHPExcel->getActiveSheet();
                 $datastart = $this->input->post('datastart',TRUE);
-                $nbechant = $this->input->post('nbechant',TRUE)-1; //Plus pratique
+                $dataend = $this->input->post('dataend',TRUE);
+                $nbechant = $dataend - $datastart + 1;
 
                 $arrayColonne= array();
                 for($i=1;$i<=$nbtotalchamp;$i++)
@@ -585,6 +587,7 @@ class Controle extends CI_Controller
 
     public function storeExcel()
     {
+
         set_time_limit(0);
         $this->load->library('excel');
         $this->load->model("Fichier_model");
@@ -632,7 +635,9 @@ class Controle extends CI_Controller
             $objPHPExcel = $objPHPExcelReader->load($inputFileName);
             $objPHPExcelWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,$outputFileType);
             $objPHPExcel = $objPHPExcelWriter->save($outputFileName);*/
+
         }
+
     }
 
     public function storeExcelCCS()
@@ -701,6 +706,11 @@ class Controle extends CI_Controller
 
         $name = $objPHPExcel->getSheetNames();
         return $name;
+    }
+
+    public function getHeaderColonne($datastart)
+    {
+
     }
 
 
