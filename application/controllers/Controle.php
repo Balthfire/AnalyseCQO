@@ -159,6 +159,11 @@ class Controle extends CI_Controller
         $this->load->view('viewUploadCCS');
     }
 
+    public function viewResultProcess($data)
+    {
+        $this->load->view('viewResultProcess', $data);
+    }
+
     public function viewProcessExcelCCS(Fichier_model $fichier)
     {
         $this->load->model('Fichier_model');
@@ -531,11 +536,13 @@ class Controle extends CI_Controller
         $ArrayResult = array();
         $MontantParCCS = array();
         $KOParCCS = array();
-        $CCStoName = array();
+        $CCSparName = array();
+        $NbLigneParCCS = array();
         foreach ($SortedCCS as $CCS => $ArrayLigne)
         {
             $Agence = $AgenceModel->get_by_id($CCS);
-            $CCStoName[$CCS] = $Agence->nom;
+            $CCSparName[$Agence->nom][] = $CCS;
+            $NbLigneParCCS[$CCS]= count($ArrayLigne);
 
             foreach ($ArrayLigne as $numligne => $ArrayColonne)
             {
@@ -564,11 +571,16 @@ class Controle extends CI_Controller
                 }
             }
         }
-        $ArrayResult[] = $MontantParCCS;
-        $ArrayResult[] = $KOParCCS;
-        $ArrayResult[] = $CCStoName;
-        var_dump($CCStoName);
-        return($ArrayResult);
+        $ArrayResult['NbLigneParCCS']= $NbLigneParCCS;
+        $ArrayResult['MontantParCCS'] = $MontantParCCS;
+        $ArrayResult['KOParCCS'] = $KOParCCS;
+        $ArrayResult['CCSparName'] = $CCSparName;
+        $ArrayResult['MT'] = array_sum($MontantParCCS);
+        $ArrayResult['AT'] = array_sum($KOParCCS);
+
+        $this->load->view('viewResultProcess', $ArrayResult);
+
+        //return($ArrayResult);
     }
 
     public function storeExcel()
