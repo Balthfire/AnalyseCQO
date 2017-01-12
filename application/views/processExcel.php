@@ -5,7 +5,7 @@
 <head>
     <title>Upload Form</title>
     <script>
-        function create_champ(i) {
+        function create_champ(i,idDiv) {
             var i2 = i + 1;
             document.getElementById('nb_champ').setAttribute('value',i);
 
@@ -20,11 +20,25 @@
         }
 
         function create_indicateur(i) {
+            var i2 = i + 1;
             var id = "cloneDiv"; // ID de ton div a cloner
             var elem = document.getElementById(id);
             var clone = elem.cloneNode(true);
             elem.parentNode.appendChild(clone);
-           // document.getElementById('lesindic_'+i).innerHTML = elem
+            // document.getElementById('lesindic_'+i).innerHTML = elem
+        }
+
+        function create_indicateurTest(i) {
+            var i2 = i + 1;
+            var id = "cloneDiv"; // ID de ton div a cloner
+            var elem = document.getElementById(id);
+            var clone = elem.cloneNode(true);
+            elem.parentNode.appendChild(clone);
+            // document.getElementById('lesindic_'+i).innerHTML = elem
+
+            document.getElementById('lesindics_'+i).innerHTML =
+
+
         }
     </script>
 </head>
@@ -33,7 +47,7 @@
 <div class="container" id="wrapper">
     <div class="container" id="cloneDiv">
         <div class="well-indicateur"><br/>
-            <div>
+            <div id="DivChampForm">
             <label class="label-test">Indicateur</label> : <input type="input" class="form-control" name="indicateur" id="indicateur" />
             <br>
                 <?php echo form_open_multipart('index.php/controle/ProcessExcel');
@@ -47,7 +61,8 @@
                 ?>
                     <label>Ligne de départ</label> : <input type="input" class="form-control" name="datastart" id="datastart" />
                     <label>Ligne de fin</label> : <input type="input" class="form-control" name="dataend" id="dataend" />
-
+            </div>
+            <div id="DivFormSaisie_1">
                     <fieldset><legend>Formulaire de saisie</legend>
                         <select class="form-control" name="nom_champ_1" id="nom_champ_1">
                             <option value="CCS">CCS</option>
@@ -61,14 +76,16 @@
             </fieldset>
             <br/>
             <input type="hidden" name="nb_champ" id="nb_champ" value="1"/>
-            <input type="hidden" name="nb_champ" id="nb_indic" value="1"/>
+            <input type="hidden" name="nb_indic" id="nb_indic" value="1"/>
             <input type="hidden" name="lastinsert" id="lastinsert" value="<?php echo $lastinsert ?>"/>
             <br /><br />
             </div>
-        <span id="lesindic_2"><a href="javascript:create_indicateur(2)">Ajouter un indicateur</a></span>
+        <span id="lesindic_2"><a href="javascript:create_indicateur(2)">Ajouter un indicateur</a>
 
         <input type="submit" value="Accepter" class="btn btn-primary" />
-        </form>
+        <?php form_close(); ?>
+
+            </div>
         </div>
     </div>
     </div>

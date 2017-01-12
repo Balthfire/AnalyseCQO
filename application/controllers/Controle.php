@@ -265,7 +265,7 @@ class Controle extends CI_Controller
             "lastinsert" => $fichier->get_last_id(),
             'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
         );
-        $this->load->view('processExcel',$data);
+        $this->load->view('viewStartProcessExcel',$data);
     }
 
     //Process suivit lors de l'upload d'un fichier excel
