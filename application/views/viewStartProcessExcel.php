@@ -25,7 +25,7 @@
             document.getElementById('nb_indic').setAttribute('value',i);
             var i2 = i + 1;
 
-            document.getElementById('indicateur_'+i).innerHTML = '<div class="well-indicateur"><br/>' +
+            document.getElementById('divindicateur_'+i).innerHTML = '<div class="well-indicateur"><br/>' +
                 '<label class="label-test">Indicateur</label> : <input type="input" class="form-control" name="indicateur_'+i+'" id="indicateur_'+i+'" /><br>' +
                 '<label>Sélectionner une feuille</label> : <select class="form-control" name="nom_feuille_'+i+'" id="nom_feuille_'+i+'">' +
                 Options +
@@ -36,10 +36,10 @@
                     '<option value="CCS">CCS</option>'+
                     '<option value="Montant">Montant</option>'+
                     '<option value="Champ KO">Champ KO</option></select>' +
-                '<input type="input" class="form-control" name="value_'+i+'_1" id="value_'+i+'_1" /><br>'+
+                '<input type="input" class="form-control" name="value_'+i+'_1" id="value_'+i+'_1" onkeyup="this.value=this.value.toUpperCase()" /><br>'+
                 '<div id="leschamps_'+i+'_2"><button type="button" class="btn btn-primary" onclick="CreateChamp('+i+',2)">Ajouter un champ</button></div></fieldset><br/>'+
                 '<input type="hidden" name="nb_champ_'+i+'" id="nb_champ_'+i+'" value="1"/></div>'+
-                '<div id="indicateur_'+i2+'"><button type="button" class="btn btn-primary" onclick="CreateIndicateur('+i2+')">Ajouter un indicateur</button></div>';
+                '<div id="divindicateur_'+i2+'"><button type="button" class="btn btn-primary" onclick="CreateIndicateur('+i2+')">Ajouter un indicateur</button></div>';
         }
 
         function CreateChamp(idIndic,i)
@@ -50,7 +50,7 @@
                 '<option value="CCS">CCS</option>' +
                 '<option value="Montant">Montant</option>' +
                 '<option value="Champ KO">Champ KO</option>' +
-                '<input type="input" class="form-control" name="value_'+idIndic+'_'+i+'" id="value_'+idIndic+'_'+i+'"/><br>'+
+                '<input type="input" class="form-control" name="value_'+idIndic+'_'+i+'" id="value_'+idIndic+'_'+i+'" onkeyup="this.value=this.value.toUpperCase()"/><br>'+
                 '<div id="leschamps_'+idIndic+'_'+i2+'"><button type="button" class="btn btn-primary" onclick="CreateChamp('+idIndic+','+i2+')">Ajouter un champ</button></div><br>';
 
             }
@@ -60,10 +60,12 @@
 <body>
 <div class="container" id="wrapper">
     <div class="container" id="cloneDiv">
+        <?php echo form_open_multipart('index.php/controle/ProcessExcel'); ?>
+
         <div class="well-indicateur"><br/>
-                <label class="label-test">Indicateur</label> : <input type="input" class="form-control" name="indicateur" id="indicateur" />
+                <label class="label-test">Indicateur</label> : <input type="input" class="form-control" name="indicateur_1" id="indicateur_1" />
                 <br>
-            <?php echo form_open_multipart('index.php/controle/ProcessExcel');
+            <?php
             echo '<label>Sélectionner une feuille</label> : <select class="form-control" name="nom_feuille_1" id="nom_feuille_1">',"n";
 
             foreach($arrayNomFeuille as $nomFeuille )
@@ -81,7 +83,7 @@
                         <option value="Montant">Montant</option>
                         <option value="Champ KO">Champ KO</option>
                     </select>
-                    <input type="input" class="form-control" name="value_1_1" id="value_1_1" />
+                    <input type="input" class="form-control" name="value_1_1" id="value_1_1" onkeyup="this.value=this.value.toUpperCase()" />
                     <br />
                     <div id="leschamps_1_2"><button type="button" class="btn btn-primary" onclick="CreateChamp(1,2)">Ajouter un champ</button></div>
                 </fieldset>
@@ -89,12 +91,12 @@
                 <input type="hidden" name="nb_champ_1" id="nb_champ_1" value="1"/>
                 <input type="hidden" name="lastinsert" id="lastinsert" value="<?php echo $lastinsert ?>"/>
         </div>
-        <div id="indicateur_2"><button type="button" class="btn btn-primary" onclick="CreateIndicateur(2)">Ajouter un indicateur</button></div>
+        <div id="divindicateur_2"><button type="button" class="btn btn-primary" onclick="CreateIndicateur(2)">Ajouter un indicateur</button></div>
         <input type="submit" value="Accepter" class="btn btn-primary" />
         <input type="hidden" name="nb_indic" id="nb_indic" value="1"/>
 
-        <?php form_close(); ?>
         </div>
-    </div>
+    <?php form_close(); ?>
+</div>
 </body>
 </html>

@@ -271,17 +271,44 @@ class Controle extends CI_Controller
     //Process suivit lors de l'upload d'un fichier excel
     public function ProcessExcel()
     {
-
         set_time_limit(0);
-        $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'));
+        $ArrayInfoIndicateur = $this->getPageInfoIndicateur();
+        $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'),$ArrayInfoIndicateur);
         $SortedCCS = $this->TriCCS($StructIdArray);
         $this->CalculSommeParCCS($SortedCCS);
+    }
+
+    public function getPageInfoIndicateur()
+    {
+        $nbIndicateur = $this->input->post('nb_indic',TRUE);
+        $ArrayInfoIndicateur = array();
+
+        for ($i=1;$i<=$nbIndicateur;$i++)
+        {
+            $nomIndicateur = $this->input->post('indicateur_'.$i,TRUE);
+            $datastart = $this->input->post('datastart_'.$i,TRUE);
+            $dataend = $this->input->post('dataend_'.$i,TRUE);
+            $nbChamp = $this->input->post('nb_champ_'.$i,TRUE);
+            $nomfeuille = $this->input->post('nom_feuille_'.$i,TRUE);
+            $ArraySelectionColonne = array();
+
+            for($c=1;$c<=$nbChamp;$c++)
+            {
+                $ArraySelectionColonne[$nomfeuille][$this->input->post('nom_champ_'.$i.'_'.$c,TRUE)] = $this->input->post('value_'.$i.'_'.$c,TRUE);
+            }
+            $ArrayInfoIndicateur[$nomIndicateur]['start'] = $datastart;
+            $ArrayInfoIndicateur[$nomIndicateur]['end'] = $dataend;
+            $ArrayInfoIndicateur[$nomIndicateur]['feuille'] = $ArraySelectionColonne;
+            var_dump($ArraySelectionColonne);
+            var_dump($ArrayInfoIndicateur);
+        }
+        return($ArrayInfoIndicateur);
     }
 
     //Récupère les données contenu dans le fichier excel en fonction des paramètres donnés par l'utilisateur
     //Envoi un Array contenant toute les données à intégré à la BDD à la fonction createstructure
     //@param : lastid - Dernier id de fichier entré en base de donné par la fonction StoreExcel()
-    public function getDataProcess($lastid)
+    public function getDataProcess($lastid,$ArrayInfoIndicateur)
     {
         $this->load->library('excel');
         $this->load->model("Fichier_model");
@@ -293,48 +320,49 @@ class Controle extends CI_Controller
         $objPHPExcel = $objReader->load($fichier->upload_path);
         $arraynomfeuille = $objPHPExcel->getSheetNames();
 
-        //Nombre de champs ajoutés via le script js
-        $nbtotalchamp = $this->input->post('nb_champ',TRUE);
-        $inputnomfeuille = $this->input->post('nom_feuille',TRUE);
-
         $generalArray = array();
         $arrayFeuille = array();
-        foreach ($arraynomfeuille as $nomfeuille) {
-            //TODO : Amélioration du système pour gérer plusieurs feuilles automatiquement
-            if($nomfeuille == $inputnomfeuille)
-            {
-                $objPHPExcel->setActiveSheetIndexByName($nomfeuille);
-                $objWorksheet = $objPHPExcel->getActiveSheet();
-                $datastart = $this->input->post('datastart',TRUE);
-                $dataend = $this->input->post('dataend',TRUE);
-                $nbechant = $dataend - $datastart + 1;
+        $LastSheetName = "";
+        foreach($ArrayInfoIndicateur as $NomIndicateur => $Infos){
 
-                $arrayColonne= array();
-                for($i=1;$i<=$nbtotalchamp;$i++)
+            $FeuillesExcel = $Infos['feuille'];
+            $datastart = $Infos['start'];
+            $dataend = $Infos['end'];
+
+            foreach($FeuillesExcel as $SheetName => $ColumnArray)
+            {
+                //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
+                if(in_array($SheetName,$arraynomfeuille))
                 {
-                    $header = $this->input->post('nom_champ_'.$i,TRUE);
-                    $colonnelettre = $this->input->post('value_'.$i,TRUE);
-                    $arrayLigne = array();
-                    for($z=0;$z <= $nbechant;$z++)
+                    $objPHPExcel->setActiveSheetIndexByName($SheetName);
+                    $objWorksheet = $objPHPExcel->getActiveSheet();
+                    $nbechant = $dataend - $datastart;
+                    $arrayColonne =array();
+                    foreach($ColumnArray as $header => $lettrecolonne)
                     {
-                        $arrayData = array();
-                        $numligne = $z + $datastart;
-                        $valeur = $objWorksheet->getCell($colonnelettre . $numligne)->getCalculatedValue();
-                        $Strvaleur = strval($valeur);
-                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
+                        $arrayLigne = array();
+                        for($z=0;$z <= $nbechant;$z++)
                         {
-                            $arrayData[$header] = $valeur;
-                            $arrayLigne[$numligne] = $arrayData;
+                            $arrayData = array();
+                            $numligne = $z + $datastart;
+                            $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
+                            $Strvaleur = strval($valeur);
+                            if (!is_null($valeur) AND strlen($Strvaleur)>0)
+                            {
+                                $arrayData[$header] = $valeur;
+                                $arrayLigne[$numligne] = $arrayData;
+                            }
+                            else
+                            {
+                                $arrayData[$header] = 0;
+                                $arrayLigne[$numligne] = $arrayData;
+                            }
                         }
-                        else
-                        {
-                            $arrayData[$header] = 0;
-                            $arrayLigne[$numligne] = $arrayData;
-                        }
+                        $arrayColonne[$lettrecolonne] = $arrayLigne;
                     }
-                    $arrayColonne[$colonnelettre] = $arrayLigne;
+                    $arrayFeuille[$SheetName] = $arrayColonne;
                 }
-                $arrayFeuille[$nomfeuille] = $arrayColonne;
+                $LastSheetName = $SheetName;
             }
         }
         $generalArray[$lastid] = $arrayFeuille;
@@ -587,7 +615,6 @@ class Controle extends CI_Controller
 
     public function storeExcel()
     {
-
         set_time_limit(0);
         $this->load->library('excel');
         $this->load->model("Fichier_model");
@@ -712,8 +739,6 @@ class Controle extends CI_Controller
     {
 
     }
-
-
 
     /**
     public function ajoutExcel()
