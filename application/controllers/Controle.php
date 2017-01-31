@@ -299,8 +299,7 @@ class Controle extends CI_Controller
             $ArrayInfoIndicateur[$nomIndicateur]['start'] = $datastart;
             $ArrayInfoIndicateur[$nomIndicateur]['end'] = $dataend;
             $ArrayInfoIndicateur[$nomIndicateur]['feuille'] = $ArraySelectionColonne;
-            var_dump($ArraySelectionColonne);
-            var_dump($ArrayInfoIndicateur);
+
         }
         return($ArrayInfoIndicateur);
     }
@@ -322,7 +321,7 @@ class Controle extends CI_Controller
 
         $generalArray = array();
         $arrayFeuille = array();
-        $LastSheetName = "";
+        $ArrayUsedSheets = array();
         foreach($ArrayInfoIndicateur as $NomIndicateur => $Infos){
 
             $FeuillesExcel = $Infos['feuille'];
@@ -362,7 +361,6 @@ class Controle extends CI_Controller
                     }
                     $arrayFeuille[$SheetName] = $arrayColonne;
                 }
-                $LastSheetName = $SheetName;
             }
         }
         $generalArray[$lastid] = $arrayFeuille;
@@ -386,15 +384,26 @@ class Controle extends CI_Controller
         $datamodel = new Data_model();
         $previousColonne = "";
         $StructIdArray = array();
+        $ArrayUsedSheets= array();
+
         foreach($arrayGeneral as $idfichier => $arrayFeuille)
         {
             foreach($arrayFeuille as $nomfeuille => $arrayColonne)
             {
-                $insert_data = array(
-                    "nom"=>$nomfeuille,
-                );
-                $feuille->insert($insert_data);
-                $idFeuille = $feuille->get_last_id();
+                if(!in_array($nomfeuille,$ArrayUsedSheets))
+                {
+                    $insert_data = array(
+                        "nom" => $nomfeuille,
+                    );
+                    $feuille->insert($insert_data);
+                    $idFeuille = $feuille->get_last_id();
+                }
+                else
+                {
+                    $idFeuille = $struct->getidFeuilleByidFichier($idfichier,$nomfeuille);
+                    var_dump($idFeuille);
+                }
+
 
                 foreach($arrayColonne as $lettreColonne => $arrayLigne)
                 {
@@ -451,6 +460,7 @@ class Controle extends CI_Controller
                         }
                     }
                 }
+                $ArrayUsedSheets[] = $nomfeuille;
             }
         }
         return($StructIdArray);
@@ -568,6 +578,7 @@ class Controle extends CI_Controller
         $KOParCCS = array();
         $CCSparName = array();
         $NbLigneParCCS = array();
+
         foreach ($SortedCCS as $CCS => $ArrayLigne)
         {
             $Agence = $AgenceModel->get_by_id($CCS);
@@ -579,7 +590,7 @@ class Controle extends CI_Controller
                 foreach($ArrayColonne as $header => $ArrayMedium)
                 {
                     switch($header) {
-                        case 'Montant':
+                            case 'Montant':
                             foreach ($ArrayMedium as $indice => $ArrayData)
                             {
                                 if (array_key_exists($CCS,$MontantParCCS))

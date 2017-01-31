@@ -45,6 +45,17 @@ class Structure_model extends CI_Model
     {
         return $this->db->query("SELECT * FROM structure WHERE id_Fichier =".$idFichier." AND id_Feuille =".$idFeuille);
     }
+
+    function getidFeuilleByidFichier($idFichier,$nomfeuille)
+    {
+        $this->load->model("Feuille_model");
+        $feuille = new Feuille_model();
+        $arrayIdByName = $feuille->getAllidFeuilleByName($nomfeuille);
+
+        $query = $this->db->query("SELECT id_Feuille FROM structure WHERE id_Fichier =".$idFichier." AND id_Feuille IN".$arrayIdByName);
+        $resultarray = $query->result_array();
+        return($resultarray);
+    }
     
     // get total rows
     function total_rows($q = NULL) {
