@@ -38,7 +38,6 @@
 
             document.getElementById('lesindics_'+i).innerHTML =
 
-
         }
     </script>
 </head>

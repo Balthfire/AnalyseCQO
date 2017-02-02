@@ -24,6 +24,9 @@
                     <a href='<?php echo base_url('index.php/controle')?>'>Liste Controle</a>
                 </li>
                 <li>
+                    <a href='<?php echo base_url('index.php/operateur/viewCalculIndicateur')?>'>Calcul Indic</a>
+                </li>
+                <li>
                     <a href='<?php echo base_url('index.php/controle/viewUploadCCS')?>'>Ajout CCS</a>
                 </li>
                 <li>

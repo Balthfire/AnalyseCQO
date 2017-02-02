@@ -43,6 +43,41 @@ class Data_model extends CI_Model
         return $resultarray;
     }
 
+    function testSQL()
+    {
+        $query = $this->db->query('CREATE TEMPORARY TABLE TMP_data AS(Select * FROM data WHERE id_Structure IN(1,2,3));
+
+ALTER TABLE TMP_data
+ADD Nom_Type_Colonne varchar(25);
+
+CREATE TEMPORARY TABLE TMP_struct AS(SELECT TMP_data.id_Structure,id_Colonne FROM structure INNER JOIN TMP_data ON TMP_data.id_Structure = structure.id_Structure);
+
+CREATE TEMPORARY TABLE TMP_colonne AS(SELECT TMP_struct.id_Colonne,id_Type_Colonne FROM colonne INNER JOIN TMP_struct ON TMP_struct.id_Colonne = colonne.id_Colonne);
+
+CREATE TEMPORARY TABLE TMP_Type_Colonne AS(SELECT type_colonne.* FROM type_colonne INNER JOIN TMP_colonne ON TMP_colonne.id_Type_Colonne = type_colonne.id_Type_Colonne);
+
+UPDATE TMP_data
+SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = 1)
+WHERE id_Structure = 1;
+
+UPDATE TMP_data
+SET Nom_Type_Colonne = (SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = 2)
+WHERE id_Structure = 2;
+
+UPDATE TMP_data
+SET Nom_Type_Colonne = (SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = 3)
+WHERE id_Structure = 3;
+
+CREATE TEMPORARY TABLE TMP_data_CCS AS (SELECT id_data as id_data_CCS,num_ligne_excel as num_ligne_excel_CCS,data as data_CCS FROM TMP_data WHERE Nom_Type_Colonne = "identifiant");
+CREATE TEMPORARY TABLE TMP_data_Anomalie AS (SELECT id_data as id_data_Anomalie,num_ligne_excel as num_ligne_excel_Anomalie ,data as data_Anomalie FROM TMP_data WHERE Nom_Type_Colonne = "Champ KO");
+CREATE TEMPORARY TABLE TMP_data_Montant AS (SELECT id_data as id_data_Montant,num_ligne_excel as num_ligne_excel_Montant,data as data_Montant FROM TMP_data WHERE Nom_Type_Colonne = "Montant");
+
+CREATE TEMPORARY TABLE TMP_Sorted AS (SELECT * FROM TMP_data_CCS INNER JOIN TMP_data_Anomalie ON TMP_data_CCS.num_ligne_excel_CCS=TMP_data_Anomalie.num_ligne_excel_Anomalie INNER JOIN TMP_data_Montant ON TMP_data_Anomalie.num_ligne_excel_Anomalie=TMP_data_Montant.num_ligne_excel_Montant);
+ SELECT *');
+        $resultarray = $query->result_array();
+
+    }
+
     function get_specific_data($numligne,$idFeuille,$idFichier,$idColonne)
     {
         $query = $this->db->query('SELECT * FROM data WHERE num_ligne_excel='.$numligne.' AND id_Structure IN(SELECT id_Structure FROM structure WHERE id_Feuille ='.$idFeuille.' AND id_Fichier ='.$idFichier.' AND id_Colonne ='.$idColonne.')');

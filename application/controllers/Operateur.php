@@ -143,6 +143,12 @@ class Operateur extends CI_Controller
 	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
+    public function viewCalculIndicateur()
+    {
+        $data = array( );
+        $this->load->view('calcul_indicateur_view');
+    }
+
 }
 
 /* End of file Operateur.php */
