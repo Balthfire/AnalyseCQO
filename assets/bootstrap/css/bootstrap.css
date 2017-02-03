@@ -5050,6 +5050,9 @@ a.list-group-item-danger.active:focus {
           box-shadow: inset 0 1px 1px rgba(0, 0, 0, .05);
 }
 .well-indicateur {
+  display: inline-block;
+  vertical-align: top;
+  width:200px;
   min-height: 20px;
   padding: 19px;
   margin-bottom: 20px;
@@ -5060,6 +5063,12 @@ a.list-group-item-danger.active:focus {
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.14);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.14);
 }
+.div-part-feuille {
+  display: inline-block;
+}
+
+
+
 .well blockquote {
   border-color: #ddd;
   border-color: rgba(0, 0, 0, .15);

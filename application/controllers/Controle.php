@@ -154,6 +154,11 @@ class Controle extends CI_Controller
         $this->load->view('ajoutExcel');
     }
 
+    public function viewUploadExcel2()
+    {
+        $this->load->view('viewUploadExcel');
+    }
+
     public function viewUploadCCS()
     {
         $this->load->view('viewUploadCCS');
@@ -267,6 +272,17 @@ class Controle extends CI_Controller
         );
         $this->load->view('viewStartProcessExcel',$data);
     }
+
+    public function viewProcessExcel2(Fichier_model $fichier)
+    {
+        $this->load->model('Fichier_model');
+        $data = array(
+            "lastinsert" => $fichier->get_last_id(),
+            'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
+        );
+        $this->load->view('viewSelectColonne',$data);
+    }
+
 
     //Process suivit lors de l'upload d'un fichier excel
     public function ProcessExcel()
@@ -662,6 +678,60 @@ class Controle extends CI_Controller
 
             $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
             $this->viewProcessExcel($fichier);
+
+            // Transforme un excel en html
+            /*
+            $inputFileType = 'Excel2007';
+            $inputFileName = $uploadpath;
+            $outputFileType = 'HTML';
+            $outputFileName = './uploads/test.html';
+            $objPHPExcelReader = PHPExcel_IOFactory::createReader($inputFileType);
+            $objPHPExcel = $objPHPExcelReader->load($inputFileName);
+            $objPHPExcelWriter = PHPExcel_IOFactory::createWriter($objPHPExcel,$outputFileType);
+            $objPHPExcel = $objPHPExcelWriter->save($outputFileName);*/
+
+        }
+
+    }
+
+    public function storeExcel2()
+    {
+        set_time_limit(0);
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+        $fichier = new Fichier_model();
+
+        $input = 'fichier_xl';
+        $config['upload_path'] = './uploads/';
+        $config['allowed_types'] = 'xlsx';
+        $config['max_size'] = '400000000000000000000';
+        $config['encrypt_name'] = false;
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+
+        if (!$this->upload->do_upload($input))
+        {
+            $this->session->set_flashdata('status', '<div class="alert alert-danger">' . $this->upload->display_errors() . '</div>');
+            $this->session->set_flashdata('message', 'Nope');
+            //$this->session->set_flashdata('message', $this->input->post($input));
+            redirect(site_url('index.php/controle'));
+        }
+        else
+        {
+            $data = $this->upload->data();
+            $uploadpath = $data['full_path'];
+            $name = $_FILES['fichier_xl']['name'];
+            $date = date('Y-n');
+            $insert_data = array(
+                "nom"=>$name,
+                "extension"=>$config['allowed_types'],
+                "upload_path"=>$uploadpath,
+                "annee"=>$date,
+            );
+            $fichier->insert($insert_data);
+
+            $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
+            $this->viewProcessExcel2($fichier);
 
             // Transforme un excel en html
             /*

@@ -63,7 +63,7 @@
                 echo ' | ';
                 echo anchor(site_url('index.php/controle/viewUploadExcel?idctrl='.$controle->id_Controle),'Excel');
                 echo ' | ';
-                echo anchor(site_url('index.php/controle/viewUploadExcel?idctrl='.$controle->id_Controle),'Tableau');
+                echo anchor(site_url('index.php/controle/viewUploadExcel2?idctrl='.$controle->id_Controle),'Tableau');
                 ?>
             </td>
 			<td><?php echo $controle->nom ?></td>
