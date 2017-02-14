@@ -5066,6 +5066,7 @@ a.list-group-item-danger.active:focus {
 }
 .div_feuille {
   border: 2px solid #CCE821;
+  border-radius: 4px;
 }
 
 .label-feuille{

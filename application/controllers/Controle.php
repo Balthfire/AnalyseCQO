@@ -283,6 +283,13 @@ class Controle extends CI_Controller
         $this->load->view('viewSelectColonne',$data);
     }
 
+    public function viewCalculExcelToSql($ArrayLinkedDatas)
+    {
+        $data = array(
+            '$ArrayLinkedDatas' => $ArrayLinkedDatas
+        );
+        $this->load->view('viewCreationCalcul',$data);
+    }
 
     //Process suivit lors de l'upload d'un fichier excel
     public function ProcessExcel()
@@ -290,6 +297,20 @@ class Controle extends CI_Controller
         set_time_limit(0);
         $ArrayInfoIndicateur = $this->getPageInfoIndicateur();
         $StructIdArray = $this->getDataProcess($this->input->post('lastinsert'),$ArrayInfoIndicateur);
+        $SortedCCS = $this->TriCCS($StructIdArray);
+        $this->CalculSommeParCCS($SortedCCS);
+    }
+
+    public function ProcessExcel2()
+    {
+        set_time_limit(0);
+        $ArrayInfoIndicateur = $this->getAllDataFromView();
+        $CleanedForStruct = $this->StructureCleaning($ArrayInfoIndicateur);
+        $AllDataArray = $this->getDataProcess2($this->input->post('lastinsert'),$CleanedForStruct);
+        $StructIdArray = $this->createStructure2($AllDataArray);
+        $ArrayLinkedDatas = $this->linkStructureToIndicateur($StructIdArray,$ArrayInfoIndicateur);
+        $this->viewCalculExcelToSql($ArrayLinkedDatas);
+        exit;
         $SortedCCS = $this->TriCCS($StructIdArray);
         $this->CalculSommeParCCS($SortedCCS);
     }
@@ -320,6 +341,93 @@ class Controle extends CI_Controller
         return($ArrayInfoIndicateur);
     }
 
+    public function getAllDataFromView()
+    {
+        $nbIndicateur = $this->input->post('nb_indic',TRUE);
+        $ArrayInfoIndicateur = array();
+        for ($i=1;$i<=$nbIndicateur;$i++)
+        {
+            $ArraySelectionFeuille = array();
+            $nomIndicateur = $this->input->post('indicateur_'.$i,TRUE);
+            $nbFeuille = $this->input->post('nb_feuille_'.$i,TRUE);
+
+            for ($f=1;$f<=$nbFeuille;$f++)
+            {
+                $datastart = $this->input->post('datastart_'.$i.'_'.$f,TRUE);
+                $dataend = $this->input->post('dataend_'.$i.'_'.$f,TRUE);
+                $nbColonne = $this->input->post('nb_colonne_'.$i.'_'.$f,TRUE);
+                $nomfeuille = $this->input->post('txt_nom_feuille_'.$i.'_'.$f,TRUE);
+                $ArraySelectionColonne = array();
+
+                for($c=1;$c<=$nbColonne;$c++)
+                {
+                    $typeColonne = $this->input->post('type_colonne_'.$i.'_'.$f.'_'.$c,TRUE);
+                    $lettreColonne = $this->input->post('value_'.$i.'_'.$f.'_'.$c,TRUE);
+                    $ArraySelectionColonne[$typeColonne] = $lettreColonne;
+
+                }
+                $ArraySelectionFeuille[$nomfeuille]['colonnes'] = $ArraySelectionColonne;
+                $ArraySelectionFeuille[$nomfeuille]['start'] = $datastart;
+                $ArraySelectionFeuille[$nomfeuille]['end'] = $dataend;
+            }
+            $ArrayInfoIndicateur[$nomIndicateur] = $ArraySelectionFeuille;
+        }
+        return($ArrayInfoIndicateur);
+    }
+
+    //Retourne un Array contenant les feuilles et les colonnes à entrer dans la table structure, sans doublons.
+    public function StructureCleaning($ArrayInfoIndicateur)
+    {
+        $TempArray = array();
+        $MergedArrays = array();
+        foreach($ArrayInfoIndicateur as $nomIndic => $ArrayFeuilles)
+        {
+            $MergedArrays = array_merge_recursive($ArrayFeuilles,$TempArray);
+            $TempArray = $ArrayFeuilles;
+        }
+
+        $CleanedArray = array();
+        $ItemArray = array();
+
+        foreach($MergedArrays as $nomfeuille => $ArrayItems)
+        {
+            foreach($ArrayItems as $item => $value)
+            {
+                $Arraycolonnes = array();
+
+                if(is_array($value))
+                {
+                    if($item == 'start')
+                        $ItemArray['start'] = $value[0];
+                    if($item == 'end')
+                        $ItemArray['end'] = $value[0];
+                }
+                else
+                {
+                    if ($item == 'start')
+                        $ItemArray['start'] = $value;
+                    if ($item == 'end')
+                        $ItemArray['end'] = $value;
+                }
+
+                if($item == 'colonnes')
+                {
+                    foreach($value as $typecolone => $lettrecolonne)
+                    {
+                        if(is_array($lettrecolonne))
+                            $Arraycolonnes[$typecolone] = $lettrecolonne[0];
+                        else
+                            $Arraycolonnes[$typecolone] = $lettrecolonne;
+                    }
+
+                    $ItemArray['colonnes'] = $Arraycolonnes;
+                }
+            }
+            $CleanedArray[$nomfeuille] = $ItemArray;
+        }
+        return($CleanedArray);
+    }
+
     //Récupère les données contenu dans le fichier excel en fonction des paramètres donnés par l'utilisateur
     //Envoi un Array contenant toute les données à intégré à la BDD à la fonction createstructure
     //@param : lastid - Dernier id de fichier entré en base de donné par la fonction StoreExcel()
@@ -333,7 +441,6 @@ class Controle extends CI_Controller
         $objReader = PHPExcel_IOFactory::createReader("Excel2007");
         $objReader->setReadDataOnly(true);
         $objPHPExcel = $objReader->load($fichier->upload_path);
-        $arraynomfeuille = $objPHPExcel->getSheetNames();
 
         $generalArray = array();
         $arrayFeuille = array();
@@ -346,45 +453,95 @@ class Controle extends CI_Controller
 
             foreach($FeuillesExcel as $SheetName => $ColumnArray)
             {
-                //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
-                if(in_array($SheetName,$arraynomfeuille))
+            //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
+                $objPHPExcel->setActiveSheetIndexByName($SheetName);
+                $objWorksheet = $objPHPExcel->getActiveSheet();
+                $nbechant = $dataend - $datastart;
+                $arrayColonne = array();
+                foreach($ColumnArray as $header => $lettrecolonne)
                 {
-                    $objPHPExcel->setActiveSheetIndexByName($SheetName);
-                    $objWorksheet = $objPHPExcel->getActiveSheet();
-                    $nbechant = $dataend - $datastart;
-                    $arrayColonne =array();
-                    foreach($ColumnArray as $header => $lettrecolonne)
+                    $arrayLigne = array();
+                    for($z=0;$z <= $nbechant;$z++)
                     {
-                        $arrayLigne = array();
-                        for($z=0;$z <= $nbechant;$z++)
+                        $arrayData = array();
+                        $numligne = $z + $datastart;
+                        $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
+                        $Strvaleur = strval($valeur);
+                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
                         {
-                            $arrayData = array();
-                            $numligne = $z + $datastart;
-                            $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
-                            $Strvaleur = strval($valeur);
-                            if (!is_null($valeur) AND strlen($Strvaleur)>0)
-                            {
-                                $arrayData[$header] = $valeur;
-                                $arrayLigne[$numligne] = $arrayData;
-                            }
-                            else
-                            {
-                                $arrayData[$header] = 0;
-                                $arrayLigne[$numligne] = $arrayData;
-                            }
+                            $arrayData[$header] = $valeur;
+                            $arrayLigne[$numligne] = $arrayData;
                         }
-                        $arrayColonne[$lettrecolonne] = $arrayLigne;
+                        else
+                        {
+                            $arrayData[$header] = 0;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
                     }
-                    $arrayFeuille[$SheetName] = $arrayColonne;
+                    $arrayColonne[$lettrecolonne] = $arrayLigne;
                 }
+                $arrayFeuille[$SheetName] = $arrayColonne;
             }
         }
         $generalArray[$lastid] = $arrayFeuille;
         return $this->createStructure($generalArray);
     }
 
+    public function getDataProcess2($lastid,$ArrayInfoIndicateur)
+    {
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+        $fichier = new Fichier_model;
+        $fichier = $fichier->get_by_id($lastid);
+
+        $objReader = PHPExcel_IOFactory::createReader("Excel2007");
+        $objReader->setReadDataOnly(true);
+        $objPHPExcel = $objReader->load($fichier->upload_path);
+
+        $generalArray = array();
+        $arrayFeuille = array();
+
+        foreach ($ArrayInfoIndicateur as $nomFeuille => $ArrayInfos)
+        {
+            $colonnesExcel = $ArrayInfos['colonnes'];
+            $datastart = $ArrayInfos['start'];
+            $dataend = $ArrayInfos['end'];
+
+                $objPHPExcel->setActiveSheetIndexByName($nomFeuille);
+                $objWorksheet = $objPHPExcel->getActiveSheet();
+                $nbechant = $dataend - $datastart;
+                $arrayColonne = array();
+
+                foreach ($colonnesExcel as $TypeColonne => $lettrecolonne)
+                {
+                //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
+                    $arrayLigne = array();
+                    for ($z = 0; $z <= $nbechant; $z++)
+                    {
+                        $arrayData = array();
+                        $numligne = $z + $datastart;
+                        $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
+                        $Strvaleur = strval($valeur);
+                        if (!is_null($valeur) AND strlen($Strvaleur) > 0)
+                        {
+                            $arrayData[$TypeColonne] = $valeur;
+                            $arrayLigne[$numligne] = $arrayData;
+                        } else {
+                            $arrayData[$TypeColonne] = 0;
+                            $arrayLigne[$numligne] = $arrayData;
+                        }
+                    }
+                    $arrayColonne[$lettrecolonne] = $arrayLigne;
+                }
+            $arrayFeuille[$nomFeuille] = $arrayColonne;
+        }
+
+        $generalArray[$lastid] = $arrayFeuille;
+        return($generalArray);
+    }
+
     //Insère les données passées en paramètre dans la BDD et retourne un Array des ID structures créés.
-    //@param : arrayGeneral - Contient les données du extraite du fichier Excel
+    //@param : arrayGeneral - Contient les données extraite du fichier Excel
     public function createStructure($arrayGeneral)
     {
         $this->load->library('excel');
@@ -417,9 +574,7 @@ class Controle extends CI_Controller
                 else
                 {
                     $idFeuille = $struct->getidFeuilleByidFichier($idfichier,$nomfeuille);
-                    var_dump($idFeuille);
                 }
-
 
                 foreach($arrayColonne as $lettreColonne => $arrayLigne)
                 {
@@ -482,9 +637,117 @@ class Controle extends CI_Controller
         return($StructIdArray);
     }
 
+    public function createStructure2($arrayGeneral)
+    {
+        $this->load->library('excel');
+        $this->load->model("Fichier_model");
+        $this->load->model("Feuille_model");
+        $this->load->model("Colonne_model");
+        $this->load->model("Structure_model");
+        $this->load->model("Data_model");
+
+        $struct = new Structure_model();
+        $feuille = new Feuille_model();
+        $col = new Colonne_model();
+        $datamodel = new Data_model();
+        $StructIdArray = array();
+        $previousColonne = "";
+
+        foreach($arrayGeneral as $idfichier => $arrayFeuille)
+        {
+            foreach($arrayFeuille as $nomfeuille => $arrayColonne)
+            {
+                $insert_data = array(
+                    "nom" => $nomfeuille,
+                );
+                $feuille->insert($insert_data);
+                $idFeuille = $feuille->get_last_id();
+
+                foreach($arrayColonne as $lettreColonne => $arrayLigne)
+                {
+                    foreach($arrayLigne as $numligne => $arrayData)
+                    {
+                        foreach($arrayData as $header => $valeur)
+                        {
+                            //TODO : mieux gérer la mise en place du type colonne
+                            if($lettreColonne != $previousColonne) {
+                                switch ($header) {
+                                    case "CCS":
+                                        $insert_data = array(
+                                            "header" => $header,
+                                            "lettre_excel" => $lettreColonne,
+                                            "id_type_colonne" => 1);
+                                        break;
+                                    case "Montant":
+                                        $insert_data = array(
+                                            "header" => $header,
+                                            "lettre_excel" => $lettreColonne,
+                                            "id_type_colonne" => 2);
+                                        break;
+                                    case "Champ KO":
+                                        $insert_data = array(
+                                            "header" => $header,
+                                            "lettre_excel" => $lettreColonne,
+                                            "id_type_colonne" => 3);
+                                        break;
+                                }
+                                $col->insert($insert_data);
+                                $idCol = $col->get_last_id();
+
+                                $insert_data = array(
+                                    "id_Fichier"=>$idfichier,
+                                    "id_Feuille"=>$idFeuille,
+                                    "id_Colonne"=>$idCol
+                                );
+                                $struct->insert($insert_data);
+                                $idStruct = $struct->get_last_id();
+                                $StructIdArray[] = $idStruct;
+                            }
+                            $insert_data = array(
+                                "data" => $valeur,
+                                "num_ligne_excel" => $numligne,
+                                "id_Structure" => $idStruct
+                            );
+                            $datamodel->insert($insert_data);
+                            $previousColonne = $lettreColonne;
+                        }
+                    }
+                }
+            }
+        }
+        return($StructIdArray);
+    }
+
+    public function linkStructureToIndicateur($ArrayStruct,$ArrayIndicateur)
+    {
+        $this->load->model("Structure_model");
+        $struct = new Structure_model();
+        $ResultArray = array();
+
+        $LinkArray = $struct->getLinkingInfos($ArrayStruct);
+
+        foreach($ArrayIndicateur as $nomIndicateur => $Arrayfeuille)
+        {
+            foreach($Arrayfeuille as $nomfeuille => $ArrayInfos)
+            {
+                foreach($ArrayInfos['colonnes'] as $TypeColonnne => $lettre)
+                {
+                    for($i=0;$i<=count($LinkArray)-1;$i++)
+                    {
+                        if($LinkArray[$i]['nom'] == $nomfeuille AND $LinkArray[$i]['lettre_excel'])
+                        {
+                            $ResultArray[$nomIndicateur][$nomfeuille]['colonnes'][$TypeColonnne] = $LinkArray[$i]['id_structure'];
+                        }
+                    }
+                }
+            }
+        }
+        return($ResultArray);
+    }
     //Parcour des différentes données colonnes identifiantes (Actuellement, en fonction du CCS -> Colonne/TypeColonne non géré dynamiquement)
     //et création d'un Array contenant chaque identifiant distinct.
     //@param : StructIdArray - Array de clé structure
+    //DEPRECATED
     public function TriCCS($StructIdArray)
     {
         $this->load->model("Type_colonne_model");

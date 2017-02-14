@@ -56,6 +56,14 @@ class Structure_model extends CI_Model
         $resultarray = $query->result_array();
         return($resultarray);
     }
+
+    function getLinkingInfos($ArrayStructId)
+    {
+        $ids = join(",",$ArrayStructId);
+        $query = $this->db->query("SELECT id_structure,nom,lettre_excel FROM structure, colonne, feuille WHERE structure.id_colonne = colonne.id_colonne AND structure.id_feuille = feuille.id_feuille AND id_structure IN (".$ids.")");
+        $resultarray = $query->result_array();
+        return($resultarray);
+    }
     
     // get total rows
     function total_rows($q = NULL) {

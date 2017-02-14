@@ -43,7 +43,7 @@ class Data_model extends CI_Model
         return $resultarray;
     }
 
-    function testSQL()
+    /*function testSQL()
     {
         $query = $this->db->query('CREATE TEMPORARY TABLE TMP_data AS(Select * FROM data WHERE id_Structure IN(1,2,3));
 
@@ -76,7 +76,7 @@ CREATE TEMPORARY TABLE TMP_Sorted AS (SELECT * FROM TMP_data_CCS INNER JOIN TMP_
  SELECT *');
         $resultarray = $query->result_array();
 
-    }
+    }*/
 
     function get_specific_data($numligne,$idFeuille,$idFichier,$idColonne)
     {
