@@ -286,7 +286,7 @@ class Controle extends CI_Controller
     public function viewCalculExcelToSql($ArrayLinkedDatas)
     {
         $data = array(
-            '$ArrayLinkedDatas' => $ArrayLinkedDatas
+            'ArrayLinkedDatas' => $ArrayLinkedDatas
         );
         $this->load->view('viewCreationCalcul',$data);
     }
@@ -304,15 +304,30 @@ class Controle extends CI_Controller
     public function ProcessExcel2()
     {
         set_time_limit(0);
+        $timestamp_debut = microtime(true);
         $ArrayInfoIndicateur = $this->getAllDataFromView();
+        $timestamp_fin = microtime(true);
+        var_dump($timestamp_fin-$timestamp_debut);
+        $timestamp_debut = microtime(true);
         $CleanedForStruct = $this->StructureCleaning($ArrayInfoIndicateur);
+        $timestamp_fin = microtime(true);
+        var_dump($timestamp_fin-$timestamp_debut);
+        $timestamp_debut = microtime(true);
         $AllDataArray = $this->getDataProcess2($this->input->post('lastinsert'),$CleanedForStruct);
+        $timestamp_fin = microtime(true);
+        var_dump($timestamp_fin-$timestamp_debut);
+        $timestamp_debut = microtime(true);
         $StructIdArray = $this->createStructure2($AllDataArray);
+        $timestamp_fin = microtime(true);
+        var_dump($timestamp_fin-$timestamp_debut);
+        $timestamp_debut = microtime(true);
         $ArrayLinkedDatas = $this->linkStructureToIndicateur($StructIdArray,$ArrayInfoIndicateur);
+        $timestamp_fin = microtime(true);
+        var_dump($timestamp_fin-$timestamp_debut);
         $this->viewCalculExcelToSql($ArrayLinkedDatas);
-        exit;
+        /*
         $SortedCCS = $this->TriCCS($StructIdArray);
-        $this->CalculSommeParCCS($SortedCCS);
+        $this->CalculSommeParCCS($SortedCCS);*/
     }
 
     public function getPageInfoIndicateur()
@@ -336,7 +351,6 @@ class Controle extends CI_Controller
             $ArrayInfoIndicateur[$nomIndicateur]['start'] = $datastart;
             $ArrayInfoIndicateur[$nomIndicateur]['end'] = $dataend;
             $ArrayInfoIndicateur[$nomIndicateur]['feuille'] = $ArraySelectionColonne;
-
         }
         return($ArrayInfoIndicateur);
     }
@@ -364,7 +378,6 @@ class Controle extends CI_Controller
                     $typeColonne = $this->input->post('type_colonne_'.$i.'_'.$f.'_'.$c,TRUE);
                     $lettreColonne = $this->input->post('value_'.$i.'_'.$f.'_'.$c,TRUE);
                     $ArraySelectionColonne[$typeColonne] = $lettreColonne;
-
                 }
                 $ArraySelectionFeuille[$nomfeuille]['colonnes'] = $ArraySelectionColonne;
                 $ArraySelectionFeuille[$nomfeuille]['start'] = $datastart;
@@ -419,7 +432,6 @@ class Controle extends CI_Controller
                         else
                             $Arraycolonnes[$typecolone] = $lettrecolonne;
                     }
-
                     $ItemArray['colonnes'] = $Arraycolonnes;
                 }
             }
@@ -499,7 +511,7 @@ class Controle extends CI_Controller
         $objPHPExcel = $objReader->load($fichier->upload_path);
 
         $generalArray = array();
-        $arrayFeuille = array();
+        //$arrayFeuille = array();
 
         foreach ($ArrayInfoIndicateur as $nomFeuille => $ArrayInfos)
         {
@@ -507,36 +519,37 @@ class Controle extends CI_Controller
             $datastart = $ArrayInfos['start'];
             $dataend = $ArrayInfos['end'];
 
-                $objPHPExcel->setActiveSheetIndexByName($nomFeuille);
-                $objWorksheet = $objPHPExcel->getActiveSheet();
-                $nbechant = $dataend - $datastart;
-                $arrayColonne = array();
+            $objPHPExcel->setActiveSheetIndexByName($nomFeuille);
+            $objWorksheet = $objPHPExcel->getActiveSheet();
+            $nbechant = $dataend - $datastart;
+            //$arrayColonne = array();
 
-                foreach ($colonnesExcel as $TypeColonne => $lettrecolonne)
+            foreach ($colonnesExcel as $TypeColonne => $lettrecolonne)
+            {
+                //$arrayLigne = array();
+                for ($z = 0; $z <= $nbechant; $z++)
                 {
-                //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
-                    $arrayLigne = array();
-                    for ($z = 0; $z <= $nbechant; $z++)
+                    //$arrayData = array();
+                    $numligne = $z + $datastart;
+                    $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
+                    $Strvaleur = strval($valeur);
+                    if (!is_null($valeur) AND strlen($Strvaleur) > 0)
                     {
-                        $arrayData = array();
-                        $numligne = $z + $datastart;
-                        $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
-                        $Strvaleur = strval($valeur);
-                        if (!is_null($valeur) AND strlen($Strvaleur) > 0)
-                        {
-                            $arrayData[$TypeColonne] = $valeur;
-                            $arrayLigne[$numligne] = $arrayData;
-                        } else {
-                            $arrayData[$TypeColonne] = 0;
-                            $arrayLigne[$numligne] = $arrayData;
-                        }
-                    }
-                    $arrayColonne[$lettrecolonne] = $arrayLigne;
-                }
-            $arrayFeuille[$nomFeuille] = $arrayColonne;
-        }
+                        //$arrayData[$TypeColonne] = $valeur;
+                        //$arrayLigne[$numligne] = $arrayData;
+                        $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = $valeur;
 
-        $generalArray[$lastid] = $arrayFeuille;
+                    } else {
+                        //$arrayData[$TypeColonne] = 0;
+                        //$arrayLigne[$numligne] = $arrayData;
+                        $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = 0;
+                    }
+                }
+                //$arrayColonne[$lettrecolonne] = $arrayLigne;
+            }
+            //$arrayFeuille[$nomFeuille] = $arrayColonne;
+        }
+        //$generalArray[$lastid] = $arrayFeuille;
         return($generalArray);
     }
 
@@ -670,7 +683,8 @@ class Controle extends CI_Controller
                         foreach($arrayData as $header => $valeur)
                         {
                             //TODO : mieux gérer la mise en place du type colonne
-                            if($lettreColonne != $previousColonne) {
+                            if($lettreColonne != $previousColonne)
+                            {
                                 switch ($header) {
                                     case "CCS":
                                         $insert_data = array(
