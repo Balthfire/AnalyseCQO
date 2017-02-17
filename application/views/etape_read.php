@@ -10,13 +10,14 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Indicateur Read</h2>
+        <h2 style="margin-top:0px">Etape Read</h2>
         <table class="table">
-	    <tr><td>Nom</td><td><?php echo $nom; ?></td></tr>
-	    <tr><td>Calcul Query</td><td><?php echo $calcul_query; ?></td></tr>
-	    <tr><td>Id Controle</td><td><?php echo $id_Controle; ?></td></tr>
+	    <tr><td>AvecColonne</td><td><?php echo $AvecColonne; ?></td></tr>
+	    <tr><td>Ordre</td><td><?php echo $ordre; ?></td></tr>
+	    <tr><td>Id Operateur</td><td><?php echo $id_Operateur; ?></td></tr>
+	    <tr><td>Id Structure</td><td><?php echo $id_Structure; ?></td></tr>
 	    <tr><td>Id Type Indicateur</td><td><?php echo $id_Type_Indicateur; ?></td></tr>
-	    <tr><td></td><td><a href="<?php echo site_url('indicateur') ?>" class="btn btn-default">Cancel</a></td></tr>
+	    <tr><td></td><td><a href="<?php echo site_url('etape') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>
 </html>

@@ -8,7 +8,7 @@ class Operateur_model extends CI_Model
 
     public $table = 'operateur';
     public $id = 'id_Operateur';
-    public $order = 'DESC';
+    public $order = 'ASC';
 
     function __construct()
     {
@@ -19,7 +19,13 @@ class Operateur_model extends CI_Model
     function get_all()
     {
         $this->db->order_by($this->id, $this->order);
-        return $this->db->get($this->table)->result();
+        return $this->db->get($this->table)->result_array();
+    }
+
+    function get_operateurs()
+    {
+        $query = $this->db->query("SELECT valeur FROM operateur");
+        return ($query->result_array());
     }
 
     // get data by id

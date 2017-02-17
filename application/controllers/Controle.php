@@ -285,8 +285,12 @@ class Controle extends CI_Controller
 
     public function viewCalculExcelToSql($ArrayLinkedDatas)
     {
+        $this->load->model('Operateur_model');
+        $operateur = new Operateur_model();
+
         $data = array(
-            'ArrayLinkedDatas' => $ArrayLinkedDatas
+            'ArrayLinkedDatas' => $ArrayLinkedDatas,
+            'ArrayOperateurs' => $operateur->get_all()
         );
         $this->load->view('viewCreationCalcul',$data);
     }
@@ -550,6 +554,7 @@ class Controle extends CI_Controller
             //$arrayFeuille[$nomFeuille] = $arrayColonne;
         }
         //$generalArray[$lastid] = $arrayFeuille;
+        unset($objPHPExcel);
         return($generalArray);
     }
 
@@ -748,7 +753,7 @@ class Controle extends CI_Controller
                 {
                     for($i=0;$i<=count($LinkArray)-1;$i++)
                     {
-                        if($LinkArray[$i]['nom'] == $nomfeuille AND $LinkArray[$i]['lettre_excel'])
+                        if($LinkArray[$i]['nom'] == $nomfeuille AND $LinkArray[$i]['lettre_excel'] == $lettre)
                         {
                             $ResultArray[$nomIndicateur][$nomfeuille]['colonnes'][$TypeColonnne] = $LinkArray[$i]['id_structure'];
                         }
@@ -1090,6 +1095,7 @@ class Controle extends CI_Controller
         $objPHPExcel = $objReader->load($fichier->upload_path);
 
         $name = $objPHPExcel->getSheetNames();
+        unset($objPHPExcel);
         return $name;
     }
 

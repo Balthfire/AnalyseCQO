@@ -10,10 +10,10 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Indicateur List</h2>
+        <h2 style="margin-top:0px">Etape List</h2>
         <div class="row" style="margin-bottom: 10px">
             <div class="col-md-4">
-                <?php echo anchor(site_url('indicateur/create'),'Create', 'class="btn btn-primary"'); ?>
+                <?php echo anchor(site_url('etape/create'),'Create', 'class="btn btn-primary"'); ?>
             </div>
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
@@ -23,7 +23,7 @@
             <div class="col-md-1 text-right">
             </div>
             <div class="col-md-3 text-right">
-                <form action="<?php echo site_url('indicateur/index'); ?>" class="form-inline" method="get">
+                <form action="<?php echo site_url('etape/index'); ?>" class="form-inline" method="get">
                     <div class="input-group">
                         <input type="text" class="form-control" name="q" value="<?php echo $q; ?>">
                         <span class="input-group-btn">
@@ -31,7 +31,7 @@
                                 if ($q <> '')
                                 {
                                     ?>
-                                    <a href="<?php echo site_url('indicateur'); ?>" class="btn btn-default">Reset</a>
+                                    <a href="<?php echo site_url('etape'); ?>" class="btn btn-default">Reset</a>
                                     <?php
                                 }
                             ?>
@@ -44,28 +44,30 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Nom</th>
-		<th>Calcul Query</th>
-		<th>Id Controle</th>
+		<th>AvecColonne</th>
+		<th>Ordre</th>
+		<th>Id Operateur</th>
+		<th>Id Structure</th>
 		<th>Id Type Indicateur</th>
 		<th>Action</th>
             </tr><?php
-            foreach ($indicateur_data as $indicateur)
+            foreach ($etape_data as $etape)
             {
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $indicateur->nom ?></td>
-			<td><?php echo $indicateur->calcul_query ?></td>
-			<td><?php echo $indicateur->id_Controle ?></td>
-			<td><?php echo $indicateur->id_Type_Indicateur ?></td>
+			<td><?php echo $etape->AvecColonne ?></td>
+			<td><?php echo $etape->ordre ?></td>
+			<td><?php echo $etape->id_Operateur ?></td>
+			<td><?php echo $etape->id_Structure ?></td>
+			<td><?php echo $etape->id_Type_Indicateur ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('indicateur/read/'.$indicateur->id_Indicateur),'Read'); 
+				echo anchor(site_url('etape/read/'.$etape->id_Etape),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/update/'.$indicateur->id_Indicateur),'Update'); 
+				echo anchor(site_url('etape/update/'.$etape->id_Etape),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/delete/'.$indicateur->id_Indicateur),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('etape/delete/'.$etape->id_Etape),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

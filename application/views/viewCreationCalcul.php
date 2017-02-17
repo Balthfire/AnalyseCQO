@@ -13,7 +13,7 @@
                 alert(ArrayLinkedDatas);
             }
         }
-
+/*
         function SetFormula(idSelect,idIndic)
         {
             idSelect++;
@@ -22,14 +22,21 @@
             var parent =  document.getElementById('select_colonne_'+idIndic+'_'+idSelect).parentNode;
             parent.removeChild(document.getElementById('select_colonne_'+idIndic+'_'+idSelect));
         }
+*/
+        var ArrayFormula = [];
 
-        function SetArrayFormula(idSelect,idIndic,ArrayFormula)
+        function SetFormula(idOperateur,idIndic)
         {
-            idSelect++;
+            /*
+            if("key" in ArrayFormula[idIndic])
+            {
+                //ArrayFormula[idIndic][idColonne][] = idOperateur;
+            }*/
             alert(idIndic);
+            alert(idOperateur);
             var labelFormula =  document.getElementById('formula_'+idIndic);
-            var selectColonne = document.getElementById('formula_'+idIndic);
-            labelFormula.innerHTML = ;
+            //var selectColonne = document.getElementById('formula_'+idIndic);
+            labelFormula.innerHTML = "chips" ;
         }
 
         function dump(obj) {
@@ -48,7 +55,8 @@
 <div class="container" id="wrapper">
     <div class="row">
         <?php
-        $i=0;
+        echo form_open_multipart();
+        $Indic=0;
         $c=0;
         $varhtml = "";
 
@@ -56,11 +64,11 @@
         {
             $varIndic="";
             $varColonne="";
-            $i++;
+            $Indic++;
             $varhtml = $varhtml."<div class='col-md-4'>";
-            $varIndic = $varIndic."<div class='well-indicateur' id='indicateur_'".$i.">";
+            $varIndic = $varIndic."<div class='well-indicateur' id='indicateur_'".$Indic.">";
             $varIndic = $varIndic."<label>".$nomIndicateur."</label><br/>";
-            $varIndic = $varIndic."<select class='form-control' id='select_colonne_".$i."_".$c."'>";
+            $varIndic = $varIndic."<select class='form-control' id='select_colonne_".$Indic."_".$c."'>";
             $varColonne = $varColonne."<option value='' disabled selected>Selection colonne</option>";
             foreach($ArrayFeuille as $nomFeuille => $ArrayColonne)
             {
@@ -71,11 +79,19 @@
                 }
             }
             $varIndic = $varIndic.$varColonne."</select></br>";
-            $varIndic = $varIndic."<label id='formula_".$i."'></label>";
-            $varIndic = $varIndic."<button class='btn btn-primary-end' type='button' onclick='SetFormula(0,".$i.")'>Appliquer Formule</button></div></div>";
+            $varIndic = $varIndic."<div class='row'>";
+            for($i=0;$i<=count($ArrayOperateurs)-1;$i++)
+            {
+                $val=$ArrayOperateurs[$i]['valeur'];
+                $idop=$ArrayOperateurs[$i]['id_Operateur'];
+                $varIndic = $varIndic."<div class='col-md-4'><button class='btn btn-primary-end' type='button' onclick='SetFormula(".$idop.",".$Indic.")'>".$val."</button></div>";
+            }
+            $varIndic = $varIndic."</div></br><label id='formula_".$Indic."'>Chips</label>";
+            $varIndic = $varIndic."<button class='btn btn-primary-end' type='button'>Appliquer Formule</button></div></div>";
             $varhtml = $varhtml.$varIndic;
         }
         echo $varhtml;
+        echo form_close();
         ?>
     </div>
 </div>

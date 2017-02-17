@@ -136,7 +136,7 @@
                 <select class="form-control" name="nom_feuille_1" id="nom_feuille_1">
                     <option value="none" disabled selected>Feuille de calcul</option>
                 <?php
-                foreach($arrayNomFeuille as $nomFeuille )
+                foreach($arrayNomFeuille as $nomFeuille)
                 {
                     echo '<option value="'.$nomFeuille.'">'.$nomFeuille.'</option>';
                 }
