@@ -5069,6 +5069,11 @@ a.list-group-item-danger.active:focus {
   border-radius: 4px;
 }
 
+.hr-test {
+  border: 1px solid #CCE821;
+  width:100%;
+}
+
 .label-feuille{
   text-align: center;
   vertical-align: center;

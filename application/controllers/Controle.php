@@ -328,6 +328,7 @@ class Controle extends CI_Controller
         $ArrayLinkedDatas = $this->linkStructureToIndicateur($StructIdArray,$ArrayInfoIndicateur);
         $timestamp_fin = microtime(true);
         var_dump($timestamp_fin-$timestamp_debut);
+
         $this->viewCalculExcelToSql($ArrayLinkedDatas);
         /*
         $SortedCCS = $this->TriCCS($StructIdArray);
@@ -397,12 +398,15 @@ class Controle extends CI_Controller
     {
         $TempArray = array();
         $MergedArrays = array();
+        $TempMergedArrays = array();
+        //Merge les arrays, si les Feuilles sont déjà présentes,les colonnes de chaque indicateur sont combinées dans un même tableau.
         foreach($ArrayInfoIndicateur as $nomIndic => $ArrayFeuilles)
         {
             $MergedArrays = array_merge_recursive($ArrayFeuilles,$TempArray);
+            $MergedArrays = array_merge_recursive($MergedArrays,$TempMergedArrays);
             $TempArray = $ArrayFeuilles;
+            $TempMergedArrays = $MergedArrays;
         }
-
         $CleanedArray = array();
         $ItemArray = array();
 
@@ -551,6 +555,7 @@ class Controle extends CI_Controller
                 }
                 //$arrayColonne[$lettrecolonne] = $arrayLigne;
             }
+            unset($objWorksheet);
             //$arrayFeuille[$nomFeuille] = $arrayColonne;
         }
         //$generalArray[$lastid] = $arrayFeuille;
@@ -762,6 +767,15 @@ class Controle extends CI_Controller
             }
         }
         return($ResultArray);
+    }
+
+    public function StoreFormula()
+    {
+        var_dump($_POST);
+        $ArrayFormula = $this->input->post('HiddenFormula',TRUE);
+        //$ArrayFormula = json_decode($this->input->post('HiddenFormula',TRUE));
+        var_dump($ArrayFormula);
+
     }
     //Parcour des différentes données colonnes identifiantes (Actuellement, en fonction du CCS -> Colonne/TypeColonne non géré dynamiquement)
     //et création d'un Array contenant chaque identifiant distinct.
