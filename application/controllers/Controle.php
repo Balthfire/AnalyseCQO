@@ -771,9 +771,21 @@ class Controle extends CI_Controller
 
     public function StoreFormula()
     {
-        var_dump($_POST);
-        $ArrayFormula = $this->input->post('HiddenFormula',TRUE);
-        //$ArrayFormula = json_decode($this->input->post('HiddenFormula',TRUE));
+        $ObjectFormula = json_decode($this->input->post('HiddenFormula',TRUE));
+        $ArrayFormula = array();
+        foreach($ObjectFormula as $nomIndic => $ArrayDenoNum)
+        {
+            foreach($ArrayDenoNum as $numerateur => $ArrayIdStruct)
+            {
+                foreach($ArrayIdStruct as $idStruct => $ArrayOperateur)
+                {
+                    foreach($ArrayOperateur as $key => $idOperateur)
+                    {
+                        $ArrayFormula[$nomIndic][$numerateur][$idStruct][$key] = $idOperateur;
+                    }
+                }
+            }
+        }
         var_dump($ArrayFormula);
 
     }

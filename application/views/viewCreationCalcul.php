@@ -7,15 +7,13 @@
         var ArrayFormula = {};
         var ArrayDenominateur = {};
         var ArrayNumerateur = {};
-        var TempArrayNum = {};
-        var TempArrayDeno = {};
+        var bool = true;
+        var tempNomIndic;
 
         function SetFormula(idOperateur,idIndic,numerateur)
         {
             var labelFormula,columnId,divToAdd,nbCol,child,selectValue,textnumerateur;
             var nomIndic = document.getElementById('value_nom_indicateur_'+idIndic).value;
-            ArrayNumerateur[nomIndic] = {}; //massacrer Xavier, sa maison et tout ce qui va avec
-            ArrayDenominateur[nomIndic] = {}; //remassacrer Xavier, sa maison et tout ce qui va avec
             if(numerateur == 1) {
                 textnumerateur = "numerateur";
             }
@@ -25,8 +23,6 @@
             nbCol = document.getElementById('nb_Colonne_'+textnumerateur+'_'+idIndic).value;
             columnId = document.getElementById('select_colonne_'+textnumerateur+'_'+idIndic+'_'+nbCol);
             selectValue = columnId.value;
-            ArrayNumerateur[nomIndic][selectValue] = {};
-            ArrayDenominateur[nomIndic][selectValue] = {};
             if(selectValue != "none")
             {
                 if(idOperateur == 1) {
@@ -38,37 +34,88 @@
 
                     divToAdd = columnId.parentNode;
                     divToAdd.appendChild(child);
-                    if (numerateur == 1) {
-                        ArrayNumerateur[nomIndic]=(idOperateur);
-                    }
-                    else{
-                        ArrayDenominateur[nomIndic]=(idOperateur);
-                    }
+                    /*
+                    if (numerateur == 1) { }
+                    else{ }
                 }
                 else {
-                    if (numerateur == 1) {
-                        ArrayNumerateur[nomIndic][selectValue]=(idOperateur);
-                    }
-                    else {
-                        ArrayDenominateur[nomIndic][selectValue]=(idOperateur);
-                    }
+                    */
                 }
                 labelFormula = document.getElementById('formula_'+textnumerateur+'_'+idIndic);
                 columnId.disabled = true;
-                ArrayFormula[nomIndic] = {};
-                ArrayFormula[nomIndic][textnumerateur] = {};
-                if (numerateur == 1) {
-                    ArrayFormula[nomIndic][textnumerateur]=(ArrayNumerateur[nomIndic]);
-                    alert(ArrayFormula[nomIndic][textnumerateur]);
-                }
-                else{
-                    ArrayFormula[nomIndic][textnumerateur]=(ArrayDenominateur[nomIndic]);
-                    alert(ArrayFormula[nomIndic][textnumerateur]);
-                }
 
+                var resp = checkArrayColumnExist(ArrayNumerateur,nomIndic,selectValue);
+                if (numerateur == 1) {
+                    if(resp == true){
+                        ArrayNumerateur[nomIndic][selectValue] = writeArray(ArrayNumerateur,nomIndic,selectValue,idOperateur);
+                    } else {
+                        if (resp == "needColumn") {
+                            ArrayNumerateur[nomIndic][selectValue] = writeArray(ArrayNumerateur,nomIndic,selectValue,idOperateur);
+                        } else {
+                            ArrayNumerateur[nomIndic] = {};
+                            ArrayNumerateur[nomIndic][selectValue] = writeArray(ArrayNumerateur,nomIndic,selectValue,idOperateur);
+                        }
+                    }
+                } else {
+                    resp = checkArrayColumnExist(ArrayDenominateur,nomIndic,selectValue);
+                    if(resp == true){
+                        ArrayDenominateur[nomIndic][selectValue] = writeArray(ArrayDenominateur,nomIndic,selectValue,idOperateur);
+                    } else {
+                        if (resp == "needColumn") {
+                            ArrayDenominateur[nomIndic][selectValue] = writeArray(ArrayDenominateur,nomIndic,selectValue,idOperateur);
+                        } else {
+                            ArrayDenominateur[nomIndic] = {};
+                            ArrayDenominateur[nomIndic][selectValue] = writeArray(ArrayDenominateur,nomIndic,selectValue,idOperateur);
+                        }
+                    }
+                }
+                writeFormula(nomIndic,textnumerateur);
             }
             else{
                 alert('Veuillez sélectionner une colonne');
+            }
+        }
+
+        function writeFormula(nomIndic,textnumerateur)
+        {
+            var resp = checkArrayColumnExist(ArrayFormula,nomIndic,textnumerateur);
+            if(textnumerateur == "numerateur")
+            {
+                if(resp == true) {
+                    ArrayFormula[nomIndic][textnumerateur] = ArrayNumerateur[nomIndic];
+                }
+                else {
+                    if (resp == "needColumn") {
+                        ArrayFormula[nomIndic][textnumerateur] = ArrayNumerateur[nomIndic];
+                    }
+                    else {
+                        if(bool||(nomIndic != tempNomIndic))
+                        {
+                            ArrayFormula[nomIndic] = {};
+                            bool = false;
+                            tempNomIndic = nomIndic;
+                        }
+                        ArrayFormula[nomIndic][textnumerateur] = ArrayNumerateur[nomIndic];
+                    }
+                }
+            }
+            else {
+                if(resp == true) {
+                    ArrayFormula[nomIndic][textnumerateur] = ArrayDenominateur[nomIndic];
+                }
+                else {
+                    if (resp == "needColumn") {
+                        ArrayFormula[nomIndic][textnumerateur] = ArrayDenominateur[nomIndic];
+                    }
+                    else {
+                        if(bool)
+                        {
+                            ArrayFormula[nomIndic] = {};
+                            bool = false;
+                        }
+                        ArrayFormula[nomIndic][textnumerateur] = ArrayDenominateur[nomIndic];
+                    }
+                }
             }
         }
 
@@ -76,10 +123,24 @@
         {
             //TODO : faire cette fonction :)
         }
-/*
+
+        function writeArray(Array,nomIndic,selectValue,idOperateur)
+        {
+            var oldArray,TempArray,i;
+            oldArray = Array[nomIndic][selectValue];
+            TempArray = {};
+            i=0;
+            for(var TestId in oldArray) {
+                TempArray[i] = TestId;
+                i++
+            }
+            TempArray[i] = idOperateur;
+            return(TempArray);
+        }
+
         function ArrayKeyExist(Array,key)
         {
-            if(key in Array){
+            if(Array.hasOwnProperty(key)){
                 return true;
             }
             else {
@@ -90,7 +151,7 @@
         function checkArrayColumnExist(Array,nomIndic,ColValue)
         {
             if (ArrayKeyExist(Array,nomIndic)){
-                if(ArrayKeyExist(Array[nomIndic],ColValue)
+                if(ArrayKeyExist(Array[nomIndic],ColValue))
                 {
                     return true;
                 }
@@ -103,14 +164,11 @@
                 return "needIndic";
             }
         }
-*/
+
         function createArrayFormula()
         {
-            var jsonstring = JSON.stringify(ArrayFormula);
-            document.getElementById('HiddenFormula').value = jsonstring;
-            //alert(JSON.stringify(ArrayFormula));
-            //alert(document.getElementById('HiddenFormula').value);
-           // document.getElementById('form_calcul').submit();
+            document.getElementById('HiddenFormula').value = JSON.stringify(ArrayFormula);
+            alert(JSON.stringify(ArrayFormula));
         }
 
         function OptionsColonne(nomIndic)
@@ -182,7 +240,7 @@
             $varhtml = $varhtml."</div></div>";
         }
         $varhtml = $varhtml . "<input type=\"submit\" onclick=\"createArrayFormula()\">";
-        $varhtml = $varhtml . "<input type=\"hidden\" name=\"HiddenFormula\" id=\"HiddenFormula\" value=\"chips\">";
+        $varhtml = $varhtml . "<input type=\"hidden\" name=\"HiddenFormula\" id=\"HiddenFormula\" value=''>";
 
         echo $varhtml;
         echo form_close();
