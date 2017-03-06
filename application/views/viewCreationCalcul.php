@@ -77,7 +77,7 @@
         }
 
         function writeFormula(nomIndic,textnumerateur)
-        {
+         {
             var resp = checkArrayColumnExist(ArrayFormula,nomIndic,textnumerateur);
             if(textnumerateur == "numerateur")
             {
@@ -112,6 +112,7 @@
                         {
                             ArrayFormula[nomIndic] = {};
                             bool = false;
+                            tempNomIndic = nomIndic;
                         }
                         ArrayFormula[nomIndic][textnumerateur] = ArrayDenominateur[nomIndic];
                     }
@@ -130,8 +131,8 @@
             oldArray = Array[nomIndic][selectValue];
             TempArray = {};
             i=0;
-            for(var TestId in oldArray) {
-                TempArray[i] = TestId;
+            for(var id in oldArray) {
+                TempArray[i] = oldArray[id];
                 i++
             }
             TempArray[i] = idOperateur;
@@ -151,12 +152,10 @@
         function checkArrayColumnExist(Array,nomIndic,ColValue)
         {
             if (ArrayKeyExist(Array,nomIndic)){
-                if(ArrayKeyExist(Array[nomIndic],ColValue))
-                {
+                if(ArrayKeyExist(Array[nomIndic],ColValue)) {
                     return true;
                 }
-                else
-                {
+                else {
                     return "needColumn";
                 }
             }
@@ -197,7 +196,7 @@
 <div class="container" id="wrapper">
     <div class="row">
         <?php
-        echo form_open_multipart('index.php/controle/StoreFormula','id="form_calcul"');
+        echo form_open_multipart('index.php/controle/ProcessCalcul','id="form_calcul"');
         $Indic=0;
         $varhtml = "";
         foreach ($ArrayLinkedDatas as $nomIndicateur => $ArrayFeuille)
@@ -241,6 +240,7 @@
         }
         $varhtml = $varhtml . "<input type=\"submit\" onclick=\"createArrayFormula()\">";
         $varhtml = $varhtml . "<input type=\"hidden\" name=\"HiddenFormula\" id=\"HiddenFormula\" value=''>";
+        $varhtml = $varhtml . "<input type=\"hidden\" name=\"idControle\" id=\"idControle\" value='$idControle'>";
 
         echo $varhtml;
         echo form_close();

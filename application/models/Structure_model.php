@@ -41,6 +41,13 @@ class Structure_model extends CI_Model
         return($resultarray);
     }
 
+    function get_column_identifiant($idFichier,$idFeuille)
+    {
+        $query = $this->db->query('SELECT structure.id_Colonne FROM structure,colonne WHERE id_Fichier ='.$idFichier.' AND id_Feuille ='.$idFeuille.' AND structure.id_Colonne = colonne.id_Colonne AND id_Type_Colonne = 1');
+        $resultarray = $query->result_array();
+        return($resultarray);
+    }
+
     function get_all_column_id($idFichier,$idFeuille)
     {
         return $this->db->query("SELECT * FROM structure WHERE id_Fichier =".$idFichier." AND id_Feuille =".$idFeuille);

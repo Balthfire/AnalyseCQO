@@ -155,6 +155,7 @@
         <div class ="col-md-12">
             <input type="submit" value="Accepter" class="btn btn-primary-end" />
             <input type="hidden" name="nb_indic" id="nb_indic" value="1"/>
+            <input type="hidden" name="idControle" id="idControle" value="<?php echo $idControle ?>"/>
         </div>
     </div>
 <?php form_close(); ?>

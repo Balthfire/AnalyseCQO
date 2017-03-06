@@ -273,22 +273,24 @@ class Controle extends CI_Controller
         $this->load->view('viewStartProcessExcel',$data);
     }
 
-    public function viewProcessExcel2(Fichier_model $fichier)
+    public function viewProcessExcel2(Fichier_model $fichier,$idctrl)
     {
         $this->load->model('Fichier_model');
         $data = array(
+            'idControle'=> $idctrl,
             "lastinsert" => $fichier->get_last_id(),
             'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
         );
         $this->load->view('viewSelectColonne',$data);
     }
 
-    public function viewCalculExcelToSql($ArrayLinkedDatas)
+    public function viewCalculExcelToSql($ArrayLinkedDatas,$idCtrl)
     {
         $this->load->model('Operateur_model');
         $operateur = new Operateur_model();
 
         $data = array(
+            'idControle' => $idCtrl,
             'ArrayLinkedDatas' => $ArrayLinkedDatas,
             'ArrayOperateurs' => $operateur->get_all()
         );
@@ -307,32 +309,13 @@ class Controle extends CI_Controller
 
     public function ProcessExcel2()
     {
-        set_time_limit(0);
-        $timestamp_debut = microtime(true);
+        $idCtrl = $this->input->post('idControle',TRUE);
         $ArrayInfoIndicateur = $this->getAllDataFromView();
-        $timestamp_fin = microtime(true);
-        var_dump($timestamp_fin-$timestamp_debut);
-        $timestamp_debut = microtime(true);
         $CleanedForStruct = $this->StructureCleaning($ArrayInfoIndicateur);
-        $timestamp_fin = microtime(true);
-        var_dump($timestamp_fin-$timestamp_debut);
-        $timestamp_debut = microtime(true);
         $AllDataArray = $this->getDataProcess2($this->input->post('lastinsert'),$CleanedForStruct);
-        $timestamp_fin = microtime(true);
-        var_dump($timestamp_fin-$timestamp_debut);
-        $timestamp_debut = microtime(true);
         $StructIdArray = $this->createStructure2($AllDataArray);
-        $timestamp_fin = microtime(true);
-        var_dump($timestamp_fin-$timestamp_debut);
-        $timestamp_debut = microtime(true);
         $ArrayLinkedDatas = $this->linkStructureToIndicateur($StructIdArray,$ArrayInfoIndicateur);
-        $timestamp_fin = microtime(true);
-        var_dump($timestamp_fin-$timestamp_debut);
-
-        $this->viewCalculExcelToSql($ArrayLinkedDatas);
-        /*
-        $SortedCCS = $this->TriCCS($StructIdArray);
-        $this->CalculSommeParCCS($SortedCCS);*/
+        $this->viewCalculExcelToSql($ArrayLinkedDatas,$idCtrl);
     }
 
     public function getPageInfoIndicateur()
@@ -382,6 +365,7 @@ class Controle extends CI_Controller
                 {
                     $typeColonne = $this->input->post('type_colonne_'.$i.'_'.$f.'_'.$c,TRUE);
                     $lettreColonne = $this->input->post('value_'.$i.'_'.$f.'_'.$c,TRUE);
+                    //IF ( typecolonne = lastypecolonne )
                     $ArraySelectionColonne[$typeColonne] = $lettreColonne;
                 }
                 $ArraySelectionFeuille[$nomfeuille]['colonnes'] = $ArraySelectionColonne;
@@ -435,10 +419,12 @@ class Controle extends CI_Controller
                 {
                     foreach($value as $typecolone => $lettrecolonne)
                     {
-                        if(is_array($lettrecolonne))
+                        if(is_array($lettrecolonne)) {
+                            //IF ($typepecolonne == $lasttypecolonne)
                             $Arraycolonnes[$typecolone] = $lettrecolonne[0];
-                        else
+                        } else {
                             $Arraycolonnes[$typecolone] = $lettrecolonne;
+                        }
                     }
                     $ItemArray['colonnes'] = $Arraycolonnes;
                 }
@@ -769,26 +755,195 @@ class Controle extends CI_Controller
         return($ResultArray);
     }
 
-    public function StoreFormula()
+    public function ProcessCalcul()
     {
+        $ArrayIndicEtape = $this->GenerateEtape();
+        $this->GenerateQuery($ArrayIndicEtape);
+    }
+
+    public function GenerateEtape()
+    {
+        $this->load->model("Etape_model");
+        $this->load->model("Indicateur_model");
+        $this->load->model("Type_Indicateur_model");
+        $this->load->model("Structure_model");
+
+        $Etape = new Etape_model();
+        $Indicateur = new Indicateur_model();
+        $Type_Indicateur = new Type_indicateur_model();
+
+        $ordre = 1;
+
+        $idCtrl = $this->input->post('idControle');
         $ObjectFormula = json_decode($this->input->post('HiddenFormula',TRUE));
-        $ArrayFormula = array();
+        $MagicArray = array();
         foreach($ObjectFormula as $nomIndic => $ArrayDenoNum)
         {
+            $nomtype = $nomIndic."_".date("Y");
+
+            $RespArray = $Type_Indicateur->getIdByNom($nomtype);
+
+            if(count($RespArray)<=0){
+                $insert_data = array(
+                    "nom" => $nomtype
+                );
+                $Type_Indicateur->insert($insert_data);
+                $idTypeIndic = $Type_Indicateur->get_last_id();
+            } else {
+                $idTypeIndic = $RespArray[0]['id_Type_Indicateur'];
+            }
+
+            $insert_data = array(
+                "nom"=>$nomIndic,
+                "id_Controle"=>$idCtrl,
+                "id_Type_Indicateur"=>$idTypeIndic
+            );
+
+            $Indicateur->insert($insert_data);
+            $idIndicateur = $Indicateur->get_last_id();
+
             foreach($ArrayDenoNum as $numerateur => $ArrayIdStruct)
             {
                 foreach($ArrayIdStruct as $idStruct => $ArrayOperateur)
                 {
                     foreach($ArrayOperateur as $key => $idOperateur)
                     {
-                        $ArrayFormula[$nomIndic][$numerateur][$idStruct][$key] = $idOperateur;
+                        $insert_data = array(
+                            "ordre" => $ordre,
+                            "id_Type_Indicateur"=>$idTypeIndic,
+                            "id_Structure"=>$idStruct,
+                            "id_Operateur"=>$idOperateur
+                        );
+
+                        $Etape->insert($insert_data);
+                        $idEtape = $Etape->get_last_id();
+                        $MagicArray[$idIndicateur]['nomIndic'] = $nomIndic;
+                        $MagicArray[$idIndicateur]['arrayEtapes'][] = $idEtape;
+                       // $ArrayFormula[$nomIndic][$numerateur][$idStruct][$key] = $idOperateur;
+                        $ordre++;
                     }
                 }
             }
         }
-        var_dump($ArrayFormula);
-
+        return($MagicArray);
     }
+
+    public function GenerateQuery($ArrayIndicEtape)
+    {
+        $this->load->model("Etape_model");
+        $this->load->model("Indicateur_model");
+        $this->load->model("Structure_model");
+        $this->load->model("Colonne_model");
+        $this->load->model("Type_Colonne_model");
+
+        $Etape = new Etape_model();
+        $Indicateur = new Indicateur_model();
+        $Structure = new Structure_model();
+        $Colonne = new Colonne_model();
+        $Type_Colonne = new Type_colonne_model();
+
+
+        foreach($ArrayIndicEtape as $idIndic => $ArrayInfo)
+        {
+            $ArrayIdStruct = array();
+            $IdStructs ="";
+            $oldStruct ="";
+            $SuperQuery ="";
+
+            foreach($ArrayInfo['arrayEtapes'] as $key => $idEtape)
+            {
+                $varEtape = $Etape->get_by_id($idEtape);
+                $varStruct = $Structure->get_by_id($varEtape->id_Structure);
+                $varColonne = $Colonne->get_by_id($varStruct->id_Colonne);
+                $varTypeColonne = $Type_Colonne->get_by_id($varColonne->id_Type_Colonne);
+
+                $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varStruct->id_feuille);
+                $structIdent = $Resp[0]['id_Colonne'];
+                if($oldStruct != $structIdent)
+                {
+                    $oldStruct = $structIdent;
+                    $IdStructs = $IdStructs.','.$structIdent;
+                    $ArrayIdStruct['Identifiant']['idStruct'] = $structIdent;
+                    $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
+
+                }
+                $IdStructs = $IdStructs.','.$varEtape->id_Structure;
+                $ArrayIdStruct[$varTypeColonne->nom]['idStruct'] = $varEtape->id_Structure;
+                $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
+            }
+            $IdStructs = substr($IdStructs, 1);
+
+            $SuperQuery = "CREATE TEMPORARY TABLE TMP_data AS(Select * FROM data WHERE id_Structure IN($IdStructs));";
+            $SuperQuery = $SuperQuery." ALTER TABLE TMP_data ADD Nom_Type_Colonne varchar(25); CREATE TEMPORARY TABLE TMP_struct AS(SELECT TMP_data.id_Structure,id_Colonne FROM structure INNER JOIN TMP_data ON TMP_data.id_Structure = structure.id_Structure); CREATE TEMPORARY TABLE TMP_colonne AS(SELECT TMP_struct.id_Colonne,id_Type_Colonne FROM colonne INNER JOIN TMP_struct ON TMP_struct.id_Colonne = colonne.id_Colonne); CREATE TEMPORARY TABLE TMP_Type_Colonne AS(SELECT type_colonne.* FROM type_colonne INNER JOIN TMP_colonne ON TMP_colonne.id_Type_Colonne = type_colonne.id_Type_Colonne);";
+            $UpdateQuery = "";
+            $TempTableQuery = "";
+            foreach($ArrayIdStruct as $nomtype => $KeyStruct)
+            {
+                $KeyStruct = $ArrayIdStruct[$nomtype]['idStruct'];
+                $UpdateQuery = $UpdateQuery."UPDATE TMP_data
+SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Type_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = $KeyStruct)
+WHERE id_Structure = $KeyStruct;";
+                $TempTableQuery = $TempTableQuery."CREATE TEMPORARY TABLE TMP_data_$nomtype AS (SELECT id_data as id_data_$nomtype,num_ligne_excel as num_ligne_excel_$nomtype,data as data_$nomtype FROM TMP_data WHERE Nom_Type_Colonne = '$nomtype');";
+            }
+            $SuperQuery = $SuperQuery.$UpdateQuery.$TempTableQuery;
+
+            $LastQuery = "CREATE TEMPORARY TABLE TMP_Sorted AS(SELECT * FROM ";
+            $TempArrayIdStruct1 = $ArrayIdStruct;
+            $TempArrayIdStruct2 = $ArrayIdStruct;
+            next($TempArrayIdStruct2);
+            for($i=1;$i<=count($ArrayIdStruct)-1;$i++)
+            {
+                if($this->has_next($TempArrayIdStruct2)) {
+                    $nomtype = key($TempArrayIdStruct1);
+                    $nomtype2 = key($TempArrayIdStruct2);
+                    if ($i == 1) {
+                        $LastQuery = $LastQuery . "TMP_data_$nomtype INNER JOIN TMP_data_$nomtype2 ON TMP_data_$nomtype.num_ligne_excel_$nomtype=TMP_data_$nomtype2.num_ligne_excel_$nomtype2 ";
+                    } else {
+                        $LastQuery = $LastQuery . "INNER JOIN TMP_data_$nomtype2 ON TMP_data_$nomtype.num_ligne_excel_$nomtype=TMP_data_$nomtype2.num_ligne_excel_$nomtype2 ";
+                    }
+                    next($TempArrayIdStruct1);
+                    next($TempArrayIdStruct2);
+                }
+                else{
+                    $nomtype = key($TempArrayIdStruct1);
+                    $nomtype2 = key($TempArrayIdStruct2);
+                    $LastQuery = $LastQuery . "INNER JOIN TMP_data_$nomtype2 ON TMP_data_$nomtype.num_ligne_excel_$nomtype=TMP_data_$nomtype2.num_ligne_excel_$nomtype2 ";
+                }
+            }
+            $LastQuery = $LastQuery .");";
+            $SuperQuery = $SuperQuery . $LastQuery;
+
+            $CalcQuery = "SELECT data_Identifiant";
+            foreach($ArrayIdStruct as $nomtype => $value)
+            {
+                $ArrayOperateurs = $ArrayIdStruct[$nomtype]['Operateurs'];
+                foreach($ArrayOperateurs as $key => $idOp)
+                {
+                    //TODO : Ajouter "valeursql dans la BDD pour mieux gérer les opérateurs"
+                    if($nomtype != "Identifiant") {
+                        $valeursql = "SUM(";
+                        $CalcQuery = $CalcQuery . "," . $valeursql . "data_" . $nomtype . ")";
+                    }
+                }
+            }
+            $CalcQuery = $CalcQuery . "FROM TMP_Sorted GROUP BY data_Identifiant;";
+            $SuperQuery = $SuperQuery . $CalcQuery;
+            var_dump($Indicateur->exectute_super_query($SuperQuery));
+        }
+    }
+
+    function has_next($array) {
+        if (is_array($array)) {
+            if (next($array) === false) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
     //Parcour des différentes données colonnes identifiantes (Actuellement, en fonction du CCS -> Colonne/TypeColonne non géré dynamiquement)
     //et création d'un Array contenant chaque identifiant distinct.
     //@param : StructIdArray - Array de clé structure
@@ -1009,6 +1164,7 @@ class Controle extends CI_Controller
         $this->load->model("Fichier_model");
         $fichier = new Fichier_model();
 
+        $idctrl = $this->input->post('id_Controle',TRUE);
         $input = 'fichier_xl';
         $config['upload_path'] = './uploads/';
         $config['allowed_types'] = 'xlsx';
@@ -1039,7 +1195,7 @@ class Controle extends CI_Controller
             $fichier->insert($insert_data);
 
             $this->session->set_flashdata('message', 'le fichier excel a bien été uploadé');
-            $this->viewProcessExcel2($fichier);
+            $this->viewProcessExcel2($fichier,$idctrl);
 
             // Transforme un excel en html
             /*

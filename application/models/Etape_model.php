@@ -28,6 +28,11 @@ class Etape_model extends CI_Model
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
     }
+
+    function get_last_id()
+    {
+        return $this->db->insert_id();
+    }
     
     // get total rows
     function total_rows($q = NULL) {
