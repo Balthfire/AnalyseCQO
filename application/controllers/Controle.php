@@ -276,10 +276,13 @@ class Controle extends CI_Controller
     public function viewProcessExcel2(Fichier_model $fichier,$idctrl)
     {
         $this->load->model('Fichier_model');
+        $this->load->model('Type_Colonne_Model');
+        $TC = new Type_colonne_model();
         $data = array(
             'idControle'=> $idctrl,
             "lastinsert" => $fichier->get_last_id(),
-            'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id())
+            'arrayNomFeuille' => $this->getNomFeuilleExcel($fichier->get_last_id()),
+            'arrayTypeColonne' => $TC->get_all()
         );
         $this->load->view('viewSelectColonne',$data);
     }
@@ -349,7 +352,6 @@ class Controle extends CI_Controller
         $ArrayInfoIndicateur = array();
         for ($i=1;$i<=$nbIndicateur;$i++)
         {
-            $ArraySelectionFeuille = array();
             $nomIndicateur = $this->input->post('indicateur_'.$i,TRUE);
             $nbFeuille = $this->input->post('nb_feuille_'.$i,TRUE);
 
@@ -359,20 +361,16 @@ class Controle extends CI_Controller
                 $dataend = $this->input->post('dataend_'.$i.'_'.$f,TRUE);
                 $nbColonne = $this->input->post('nb_colonne_'.$i.'_'.$f,TRUE);
                 $nomfeuille = $this->input->post('txt_nom_feuille_'.$i.'_'.$f,TRUE);
-                $ArraySelectionColonne = array();
 
                 for($c=1;$c<=$nbColonne;$c++)
                 {
                     $typeColonne = $this->input->post('type_colonne_'.$i.'_'.$f.'_'.$c,TRUE);
                     $lettreColonne = $this->input->post('value_'.$i.'_'.$f.'_'.$c,TRUE);
-                    //IF ( typecolonne = lastypecolonne )
-                    $ArraySelectionColonne[$typeColonne] = $lettreColonne;
+                    $ArrayInfoIndicateur[$nomIndicateur][$nomfeuille]['colonnes'][$typeColonne][] = $lettreColonne;
                 }
-                $ArraySelectionFeuille[$nomfeuille]['colonnes'] = $ArraySelectionColonne;
-                $ArraySelectionFeuille[$nomfeuille]['start'] = $datastart;
-                $ArraySelectionFeuille[$nomfeuille]['end'] = $dataend;
+                $ArrayInfoIndicateur[$nomIndicateur][$nomfeuille]['start'] = $datastart;
+                $ArrayInfoIndicateur[$nomIndicateur][$nomfeuille]['end'] = $dataend;
             }
-            $ArrayInfoIndicateur[$nomIndicateur] = $ArraySelectionFeuille;
         }
         return($ArrayInfoIndicateur);
     }
@@ -382,54 +380,43 @@ class Controle extends CI_Controller
     {
         $TempArray = array();
         $MergedArrays = array();
-        $TempMergedArrays = array();
         //Merge les arrays, si les Feuilles sont déjà présentes,les colonnes de chaque indicateur sont combinées dans un même tableau.
         foreach($ArrayInfoIndicateur as $nomIndic => $ArrayFeuilles)
         {
             $MergedArrays = array_merge_recursive($ArrayFeuilles,$TempArray);
-            $MergedArrays = array_merge_recursive($MergedArrays,$TempMergedArrays);
             $TempArray = $ArrayFeuilles;
-            $TempMergedArrays = $MergedArrays;
         }
         $CleanedArray = array();
-        $ItemArray = array();
-
         foreach($MergedArrays as $nomfeuille => $ArrayItems)
         {
             foreach($ArrayItems as $item => $value)
             {
-                $Arraycolonnes = array();
-
                 if(is_array($value))
                 {
                     if($item == 'start')
-                        $ItemArray['start'] = $value[0];
+                        $CleanedArray[$nomfeuille]['start'] = $value[0];
                     if($item == 'end')
-                        $ItemArray['end'] = $value[0];
+                        $CleanedArray[$nomfeuille]['end'] = $value[0];
                 }
                 else
                 {
                     if ($item == 'start')
-                        $ItemArray['start'] = $value;
+                        $CleanedArray[$nomfeuille]['start'] = $value;
                     if ($item == 'end')
-                        $ItemArray['end'] = $value;
+                        $CleanedArray[$nomfeuille]['end'] = $value;
                 }
 
                 if($item == 'colonnes')
                 {
-                    foreach($value as $typecolone => $lettrecolonne)
+                    foreach($value as $typecolonne => $ArrayLettreColonne)
                     {
-                        if(is_array($lettrecolonne)) {
-                            //IF ($typepecolonne == $lasttypecolonne)
-                            $Arraycolonnes[$typecolone] = $lettrecolonne[0];
-                        } else {
-                            $Arraycolonnes[$typecolone] = $lettrecolonne;
+                        foreach($ArrayLettreColonne as $key => $lettrecolonne )
+                        {
+                            $CleanedArray[$nomfeuille]['colonnes'][$typecolonne][] = $lettrecolonne;
                         }
                     }
-                    $ItemArray['colonnes'] = $Arraycolonnes;
                 }
             }
-            $CleanedArray[$nomfeuille] = $ItemArray;
         }
         return($CleanedArray);
     }
@@ -517,9 +504,11 @@ class Controle extends CI_Controller
             $objWorksheet = $objPHPExcel->getActiveSheet();
             $nbechant = $dataend - $datastart;
             //$arrayColonne = array();
-
+            /*
             foreach ($colonnesExcel as $TypeColonne => $lettrecolonne)
             {
+                var_dump($lettrecolonne);
+                exit;
                 //$arrayLigne = array();
                 for ($z = 0; $z <= $nbechant; $z++)
                 {
@@ -538,7 +527,32 @@ class Controle extends CI_Controller
                         //$arrayLigne[$numligne] = $arrayData;
                         $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = 0;
                     }
+                }*/
+
+            foreach ($colonnesExcel as $TypeColonne => $ArrayLettreColonne)
+            {
+                foreach($ArrayLettreColonne as $key => $lettrecolonne)
+                {
+                    for ($z = 0; $z <= $nbechant; $z++)
+                    {
+                        //$arrayData = array();
+                        $numligne = $z + $datastart;
+                        $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
+                        $Strvaleur = strval($valeur);
+                        if (!is_null($valeur) AND strlen($Strvaleur) > 0)
+                        {
+                            //$arrayData[$TypeColonne] = $valeur;
+                            //$arrayLigne[$numligne] = $arrayData;
+                            $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = $valeur;
+
+                        } else {
+                            //$arrayData[$TypeColonne] = 0;
+                            //$arrayLigne[$numligne] = $arrayData;
+                            $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = 0;
+                        }
+                    }
                 }
+                //$arrayLigne = array();
                 //$arrayColonne[$lettrecolonne] = $arrayLigne;
             }
             unset($objWorksheet);
@@ -572,16 +586,14 @@ class Controle extends CI_Controller
         {
             foreach($arrayFeuille as $nomfeuille => $arrayColonne)
             {
-                if(!in_array($nomfeuille,$ArrayUsedSheets))
-                {
+                if(!in_array($nomfeuille,$ArrayUsedSheets)) {
                     $insert_data = array(
                         "nom" => $nomfeuille,
                     );
                     $feuille->insert($insert_data);
                     $idFeuille = $feuille->get_last_id();
                 }
-                else
-                {
+                else {
                     $idFeuille = $struct->getidFeuilleByidFichier($idfichier,$nomfeuille);
                 }
 
@@ -652,6 +664,7 @@ class Controle extends CI_Controller
         $this->load->model("Fichier_model");
         $this->load->model("Feuille_model");
         $this->load->model("Colonne_model");
+        $this->load->model("Type_Colonne_model");
         $this->load->model("Structure_model");
         $this->load->model("Data_model");
 
@@ -659,6 +672,7 @@ class Controle extends CI_Controller
         $feuille = new Feuille_model();
         $col = new Colonne_model();
         $datamodel = new Data_model();
+        $typecolonne = new Type_colonne_model();
         $StructIdArray = array();
         $previousColonne = "";
 
@@ -678,29 +692,14 @@ class Controle extends CI_Controller
                     {
                         foreach($arrayData as $header => $valeur)
                         {
-                            //TODO : mieux gérer la mise en place du type colonne
                             if($lettreColonne != $previousColonne)
                             {
-                                switch ($header) {
-                                    case "CCS":
-                                        $insert_data = array(
-                                            "header" => $header,
-                                            "lettre_excel" => $lettreColonne,
-                                            "id_type_colonne" => 1);
-                                        break;
-                                    case "Montant":
-                                        $insert_data = array(
-                                            "header" => $header,
-                                            "lettre_excel" => $lettreColonne,
-                                            "id_type_colonne" => 2);
-                                        break;
-                                    case "Champ KO":
-                                        $insert_data = array(
-                                            "header" => $header,
-                                            "lettre_excel" => $lettreColonne,
-                                            "id_type_colonne" => 3);
-                                        break;
-                                }
+                                $TC = $typecolonne->get_by_nom($header);
+                                $insert_data = array(
+                                    "header" => $header,
+                                    "lettre_excel" => $lettreColonne,
+                                    "id_type_colonne" => $TC->id_Type_Colonne
+                                );
                                 $col->insert($insert_data);
                                 $idCol = $col->get_last_id();
 
@@ -711,6 +710,7 @@ class Controle extends CI_Controller
                                 );
                                 $struct->insert($insert_data);
                                 $idStruct = $struct->get_last_id();
+
                                 $StructIdArray[] = $idStruct;
                             }
                             $insert_data = array(
@@ -735,23 +735,26 @@ class Controle extends CI_Controller
         $ResultArray = array();
 
         $LinkArray = $struct->getLinkingInfos($ArrayStruct);
-
         foreach($ArrayIndicateur as $nomIndicateur => $Arrayfeuille)
         {
             foreach($Arrayfeuille as $nomfeuille => $ArrayInfos)
             {
-                foreach($ArrayInfos['colonnes'] as $TypeColonnne => $lettre)
+                foreach($ArrayInfos['colonnes'] as $TypeColonnne => $ArrayLettre)
                 {
-                    for($i=0;$i<=count($LinkArray)-1;$i++)
+                    foreach($ArrayLettre as $key => $lettre)
                     {
-                        if($LinkArray[$i]['nom'] == $nomfeuille AND $LinkArray[$i]['lettre_excel'] == $lettre)
+                        for($i=0;$i<=count($LinkArray)-1;$i++)
                         {
-                            $ResultArray[$nomIndicateur][$nomfeuille]['colonnes'][$TypeColonnne] = $LinkArray[$i]['id_structure'];
+                            if($LinkArray[$i]['nom'] == $nomfeuille AND $LinkArray[$i]['lettre_excel'] == $lettre)
+                            {
+                                $ResultArray[$nomIndicateur][$nomfeuille]['colonnes'][$TypeColonnne][$lettre] = $LinkArray[$i]['id_structure'];
+                            }
                         }
                     }
                 }
             }
         }
+        var_dump($ResultArray[$nomIndicateur][$nomfeuille]['colonnes']);
         return($ResultArray);
     }
 
@@ -928,7 +931,7 @@ WHERE id_Structure = $KeyStruct;";
             }
             $CalcQuery = $CalcQuery . "FROM TMP_Sorted GROUP BY data_Identifiant;";
             $SuperQuery = $SuperQuery . $CalcQuery;
-            var_dump($Indicateur->exectute_super_query($SuperQuery));
+            var_dump($Indicateur->execute_super_query($SuperQuery));
         }
     }
 
@@ -1112,7 +1115,7 @@ WHERE id_Structure = $KeyStruct;";
 
         $input = 'fichier_xl';
         $config['upload_path'] = './uploads/';
-        $config['allowed_types'] = 'xlsx';
+        $config['allowed_types'] = 'xlsx|xlsm';
         $config['max_size'] = '400000000000000000000';
         $config['encrypt_name'] = false;
         $this->load->library('upload', $config);
@@ -1407,7 +1410,6 @@ WHERE id_Structure = $KeyStruct;";
             $indiceCheck++;
             $chips = array($colString . $y => $cellValueFinal);
 
-            var_dump($chips);
 
             }
             $posOccurence = $posSearch + 1;
@@ -1431,7 +1433,6 @@ WHERE id_Structure = $KeyStruct;";
             }
             }
             }
-            var_dump($data['full_path']);
 
             redirect('index.php/controle/viewAjoutExcel');
         }

@@ -172,7 +172,7 @@
 
         function OptionsColonne(nomIndic)
         {
-            var jsArrayNomFeuille,jsArrayNomColonne,jsArrayTypeColonne;
+            var jsArrayNomFeuille,jsArrayNomColonne,jsArrayTypeColonne,jsArrayLettreColonne;
             var jsArrayLinkedDatas = <?php echo(json_encode($ArrayLinkedDatas)); ?> ;
             var options ="<option selected disabled value='none'> Selectionnez colonne </option>";
 
@@ -183,7 +183,11 @@
                 jsArrayTypeColonne = jsArrayNomColonne['colonnes'];
                 for (var TypeColonne in jsArrayTypeColonne)
                 {
-                    options += '<option value="'+jsArrayTypeColonne[TypeColonne]+'">'+nomFeuille+' - '+TypeColonne+'</option>';
+                    jsArrayLettreColonne = jsArrayTypeColonne[TypeColonne];
+                    for(var lettreColonne in jsArrayLettreColonne)
+                    {
+                        options += '<option value="'+jsArrayLettreColonne[lettreColonne]+'">'+nomFeuille+' - '+TypeColonne+' - '+lettreColonne+'</option>';
+                    }
                 }
             }
             options += '</select>';
@@ -213,14 +217,12 @@
             for($t=0;$t<=1;$t++)
             {
                 $varIndic="";
-
                 if($numerateur){
                     $txtnumerateur = "numerateur";
                 }
                 else{
                     $txtnumerateur = "denominateur";
                 }
-
                 $varIndic = $varIndic . "<div class ='row'>";
                 $varIndic = $varIndic . "<div class ='col-md-12' id='div_" . $txtnumerateur . "_" . $Indic . "'>";
                 $varIndic = $varIndic . "<div  id='div_selects_" . $txtnumerateur . "_" . $Indic . "'>";
@@ -252,9 +254,14 @@
             $varColonne = $varColonne . "<select class='form-control' id='select_colonne_". $txtnumerateur ."_" . $Indic . "_1'>";
             $varColonne = $varColonne . "<option selected disabled value='none'> Selectionnez colonne </option>";
 
-            foreach ($ArrayFeuille as $nomFeuille => $ArrayColonne) {
-                foreach ($ArrayColonne['colonnes'] as $typeColonne => $idstruct) {
-                    $varColonne = $varColonne . "<option value='" . $idstruct . "'>" . $nomFeuille . " - " . $typeColonne . "</option>";
+            foreach ($ArrayFeuille as $nomFeuille => $ArrayColonne)
+            {
+                foreach ($ArrayColonne['colonnes'] as $typeColonne => $ArrayLettre)
+                {
+                    foreach($ArrayLettre as $lettre => $idStruct)
+                    {
+                        $varColonne = $varColonne . "<option value='" . $idStruct . "'>" . $nomFeuille . " - " . $typeColonne . " - " . $lettre . "</option>";
+                    }
                 }
             }
             $varColonne =$varColonne . "</select></div></br>";

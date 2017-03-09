@@ -8,6 +8,7 @@ class Type_colonne_model extends CI_Model
 
     public $table = 'type_colonne';
     public $id = 'id_Type_Colonne';
+    public $nom = 'nom';
     public $order = 'DESC';
 
     function __construct()
@@ -26,6 +27,12 @@ class Type_colonne_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+
+    function get_by_nom($nom)
+    {
+        $this->db->where($this->nom, $nom);
         return $this->db->get($this->table)->row();
     }
     

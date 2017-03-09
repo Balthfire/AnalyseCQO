@@ -34,7 +34,7 @@ class Indicateur_model extends CI_Model
         return $this->db->insert_id();
     }
 
-    function exectute_super_query($superquery)
+    function execute_super_query($superquery)
     {
         $query = $this->db->query($superquery);
         $resultarray = $query->result_array();

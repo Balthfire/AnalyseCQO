@@ -19,19 +19,20 @@
     }
 
     function CreateSelectTypeColonne() {
-        var jsArrayNomfeuille = <?php echo json_encode($arrayNomFeuille); ?> ;
+        var jsArrayNomTypeColonne = <?php echo json_encode($arrayTypeColonne); ?> ;
         var options ="";
 
-        for(i=0;i<jsArrayNomfeuille.length;++i)
+        for(i=0;i<jsArrayNomTypeColonne.length;++i)
         {
-            var nomfeuille = jsArrayNomfeuille[i];
-            options = options + '<option value="'+nomfeuille+'">'+nomfeuille+'</option>';
+            var nomType = jsArrayNomTypeColonne[i]['nom'];
+            options = options + '<option value="'+nomType+'">'+nomType+'</option>';
         }
         options = options + '</select>';
         return(options);
     }
 
     var Options = CreateSelectNomFeuille();
+    var OptionsTypeColonne = CreateSelectTypeColonne();
 
     function CreateIndicateur(i)
     {
@@ -79,9 +80,7 @@
                 '<div id=div_colonne_'+idIndic+'_'+i2+'_1>'+
                 '<select class="form-control" name="type_colonne_'+idIndic+'_'+i2+'_1" id="type_colonne_'+idIndic+'_'+i2+'_1">'+
                 '</br></br><option value="" disabled selected>Type de colonne</option>'+
-                '<option value="CCS">CCS</option>'+
-                '<option value="Montant">Montant</option>'+
-                '<option value="Champ KO">Champ KO</option></select>' +
+                OptionsTypeColonne+
                 '<input type="text" class="form-control" name="value_'+idIndic+'_'+i2+'_1" id="value_'+idIndic+'_'+i2+'_1" placeholder="Lettre colonne" onkeyup="this.value=this.value.toUpperCase()" /></br>'+
                 '<input type="hidden" name="nb_colonne_'+idIndic+'_'+i2+'" id="nb_colonne_'+idIndic+'_'+i2+'" value="1">'+
                 '<button type="button" id="btn_ajout_colonne_'+idIndic+'_'+i2+'_1" class="btn btn-primary-end" onclick="CreateColonne('+idIndic+','+i2+',1)">Ajout Colonne</button></div></div>';
@@ -112,9 +111,7 @@
         newnode.id = 'div_colonne_'+idIndic+'_'+idFeuille+'_'+i2;
         newnode.innerHTML = '<select class="form-control" name="type_colonne_'+idIndic+'_'+idFeuille+'_'+i2+'" id="type_colonne_'+idIndic+'_'+idFeuille+'_'+i2+'">' +
             '<option value="" disabled selected>Type de colonne</option>'+
-            '<option value="CCS">CCS</option>' +
-            '<option value="Montant">Montant</option>' +
-            '<option value="Champ KO">Champ KO</option>' +
+            OptionsTypeColonne+
             '<input type="text" class="form-control" name="value_'+idIndic+'_'+idFeuille+'_'+i2+'" id="value_'+idIndic+'_'+idFeuille+'_'+i2+'" placeholder="Lettre colonne" onkeyup="this.value=this.value.toUpperCase()"/><br>'+
             '<button type="button" id="btn_ajout_colonne_'+idIndic+'_'+idFeuille+'_'+i2+'" class="btn btn-primary-end" onclick="CreateColonne('+idIndic+','+idFeuille+','+i2+')">Ajout Colonne</button></div>';
 
