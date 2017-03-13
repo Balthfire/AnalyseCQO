@@ -379,40 +379,47 @@ class Controle extends CI_Controller
     public function StructureCleaning($ArrayInfoIndicateur)
     {
         $TempArray = array();
+        $TempMergedArrays = array();
         $MergedArrays = array();
         //Merge les arrays, si les Feuilles sont déjà présentes,les colonnes de chaque indicateur sont combinées dans un même tableau.
         foreach($ArrayInfoIndicateur as $nomIndic => $ArrayFeuilles)
         {
             $MergedArrays = array_merge_recursive($ArrayFeuilles,$TempArray);
+            $MergedArrays = array_merge_recursive($MergedArrays,$TempMergedArrays);
             $TempArray = $ArrayFeuilles;
+            $TempMergedArrays = $MergedArrays;
         }
         $CleanedArray = array();
         foreach($MergedArrays as $nomfeuille => $ArrayItems)
         {
             foreach($ArrayItems as $item => $value)
             {
-                if(is_array($value))
-                {
+                if(is_array($value)) {
                     if($item == 'start')
                         $CleanedArray[$nomfeuille]['start'] = $value[0];
                     if($item == 'end')
                         $CleanedArray[$nomfeuille]['end'] = $value[0];
-                }
-                else
-                {
-                    if ($item == 'start')
+                } else {
+                    if ($item == 'start') {
                         $CleanedArray[$nomfeuille]['start'] = $value;
-                    if ($item == 'end')
+                    }
+                    if ($item == 'end') {
                         $CleanedArray[$nomfeuille]['end'] = $value;
+                    }
                 }
 
-                if($item == 'colonnes')
-                {
+                if($item == 'colonnes') {
                     foreach($value as $typecolonne => $ArrayLettreColonne)
                     {
                         foreach($ArrayLettreColonne as $key => $lettrecolonne )
                         {
-                            $CleanedArray[$nomfeuille]['colonnes'][$typecolonne][] = $lettrecolonne;
+                            if(isset($CleanedArray[$nomfeuille]['colonnes'][$typecolonne])){
+                                if(!in_array($lettrecolonne,$CleanedArray[$nomfeuille]['colonnes'][$typecolonne])) {
+                                    $CleanedArray[$nomfeuille]['colonnes'][$typecolonne][] = $lettrecolonne;
+                                }
+                            }else{
+                                $CleanedArray[$nomfeuille]['colonnes'][$typecolonne][] = $lettrecolonne;
+                            }
                         }
                     }
                 }
@@ -492,7 +499,6 @@ class Controle extends CI_Controller
         $objPHPExcel = $objReader->load($fichier->upload_path);
 
         $generalArray = array();
-        //$arrayFeuille = array();
 
         foreach ($ArrayInfoIndicateur as $nomFeuille => $ArrayInfos)
         {
@@ -503,62 +509,25 @@ class Controle extends CI_Controller
             $objPHPExcel->setActiveSheetIndexByName($nomFeuille);
             $objWorksheet = $objPHPExcel->getActiveSheet();
             $nbechant = $dataend - $datastart;
-            //$arrayColonne = array();
-            /*
-            foreach ($colonnesExcel as $TypeColonne => $lettrecolonne)
-            {
-                var_dump($lettrecolonne);
-                exit;
-                //$arrayLigne = array();
-                for ($z = 0; $z <= $nbechant; $z++)
-                {
-                    //$arrayData = array();
-                    $numligne = $z + $datastart;
-                    $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
-                    $Strvaleur = strval($valeur);
-                    if (!is_null($valeur) AND strlen($Strvaleur) > 0)
-                    {
-                        //$arrayData[$TypeColonne] = $valeur;
-                        //$arrayLigne[$numligne] = $arrayData;
-                        $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = $valeur;
-
-                    } else {
-                        //$arrayData[$TypeColonne] = 0;
-                        //$arrayLigne[$numligne] = $arrayData;
-                        $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = 0;
-                    }
-                }*/
-
             foreach ($colonnesExcel as $TypeColonne => $ArrayLettreColonne)
             {
                 foreach($ArrayLettreColonne as $key => $lettrecolonne)
                 {
                     for ($z = 0; $z <= $nbechant; $z++)
                     {
-                        //$arrayData = array();
                         $numligne = $z + $datastart;
                         $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
                         $Strvaleur = strval($valeur);
-                        if (!is_null($valeur) AND strlen($Strvaleur) > 0)
-                        {
-                            //$arrayData[$TypeColonne] = $valeur;
-                            //$arrayLigne[$numligne] = $arrayData;
+                        if (!is_null($valeur) AND strlen($Strvaleur) > 0) {
                             $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = $valeur;
-
                         } else {
-                            //$arrayData[$TypeColonne] = 0;
-                            //$arrayLigne[$numligne] = $arrayData;
                             $generalArray[$lastid][$nomFeuille][$lettrecolonne][$numligne][$TypeColonne] = 0;
                         }
                     }
                 }
-                //$arrayLigne = array();
-                //$arrayColonne[$lettrecolonne] = $arrayLigne;
             }
             unset($objWorksheet);
-            //$arrayFeuille[$nomFeuille] = $arrayColonne;
         }
-        //$generalArray[$lastid] = $arrayFeuille;
         unset($objPHPExcel);
         return($generalArray);
     }
@@ -733,7 +702,6 @@ class Controle extends CI_Controller
         $this->load->model("Structure_model");
         $struct = new Structure_model();
         $ResultArray = array();
-
         $LinkArray = $struct->getLinkingInfos($ArrayStruct);
         foreach($ArrayIndicateur as $nomIndicateur => $Arrayfeuille)
         {
@@ -754,14 +722,13 @@ class Controle extends CI_Controller
                 }
             }
         }
-        var_dump($ResultArray[$nomIndicateur][$nomfeuille]['colonnes']);
         return($ResultArray);
     }
 
     public function ProcessCalcul()
     {
         $ArrayIndicEtape = $this->GenerateEtape();
-        $this->GenerateQuery($ArrayIndicEtape);
+        $this->GenerateQuery2($ArrayIndicEtape);
     }
 
     public function GenerateEtape()
@@ -774,7 +741,6 @@ class Controle extends CI_Controller
         $Etape = new Etape_model();
         $Indicateur = new Indicateur_model();
         $Type_Indicateur = new Type_indicateur_model();
-
         $ordre = 1;
 
         $idCtrl = $this->input->post('idControle');
@@ -822,7 +788,6 @@ class Controle extends CI_Controller
                         $idEtape = $Etape->get_last_id();
                         $MagicArray[$idIndicateur]['nomIndic'] = $nomIndic;
                         $MagicArray[$idIndicateur]['arrayEtapes'][] = $idEtape;
-                       // $ArrayFormula[$nomIndic][$numerateur][$idStruct][$key] = $idOperateur;
                         $ordre++;
                     }
                 }
@@ -833,6 +798,14 @@ class Controle extends CI_Controller
 
     public function GenerateQuery($ArrayIndicEtape)
     {
+        //TODO : Ajout "valeurSQL" dans table Opérateur
+        //TODO : Ajout possible de table résultat contenant les requêtes à effectuer et l'ordre
+        //TODO : possibilité d'ajout de table "Partie" à type_colonne pour gérer le multicolonne
+        //TODO : fractionnement du code de GenerateQuery1
+        //TODO : Réécriture des méthodes sur les étapes
+
+
+
         $this->load->model("Etape_model");
         $this->load->model("Indicateur_model");
         $this->load->model("Structure_model");
@@ -844,7 +817,6 @@ class Controle extends CI_Controller
         $Structure = new Structure_model();
         $Colonne = new Colonne_model();
         $Type_Colonne = new Type_colonne_model();
-
 
         foreach($ArrayIndicEtape as $idIndic => $ArrayInfo)
         {
@@ -866,12 +838,71 @@ class Controle extends CI_Controller
                 {
                     $oldStruct = $structIdent;
                     $IdStructs = $IdStructs.','.$structIdent;
-                    $ArrayIdStruct['Identifiant']['idStruct'] = $structIdent;
+                    $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
                     $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
 
                 }
                 $IdStructs = $IdStructs.','.$varEtape->id_Structure;
-                $ArrayIdStruct[$varTypeColonne->nom]['idStruct'] = $varEtape->id_Structure;
+                $ArrayIdStruct[$varTypeColonne->nom]['idStruct'][] = $varEtape->id_Structure;
+                $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
+            }
+            $IdStructs = substr($IdStructs, 1);
+        }
+    }
+
+    function has_next($array) {
+        if (is_array($array)) {
+            if (next($array) === false) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public function GenerateQuery2($ArrayIndicEtape){
+
+        $this->load->model("Etape_model");
+        $this->load->model("Indicateur_model");
+        $this->load->model("Structure_model");
+        $this->load->model("Colonne_model");
+        $this->load->model("Type_Colonne_model");
+
+        $Etape = new Etape_model();
+        $Indicateur = new Indicateur_model();
+        $Structure = new Structure_model();
+        $Colonne = new Colonne_model();
+        $Type_Colonne = new Type_colonne_model();
+
+        foreach($ArrayIndicEtape as $idIndic => $ArrayInfo)
+        {
+            $ArrayIdStruct = array();
+            $IdStructs ="";
+            $SuperQuery ="";
+            foreach($ArrayInfo['arrayEtapes'] as $key => $idEtape)
+            {
+                $varEtape = $Etape->get_by_id($idEtape);
+                $varStruct = $Structure->get_by_id($varEtape->id_Structure);
+                $varColonne = $Colonne->get_by_id($varStruct->id_Colonne);
+                $varTypeColonne = $Type_Colonne->get_by_id($varColonne->id_Type_Colonne);
+
+                $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varStruct->id_feuille);
+                $structIdent = $Resp[0]['id_Colonne'];
+                if(isset($ArrayIdStruct['Identifiant']['idStruct'])){
+                    if(!in_array($structIdent,$ArrayIdStruct['Identifiant']['idStruct']))
+                    {
+                        $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
+                        $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
+                    }
+                }
+                else{
+                    $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
+                    $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
+                }
+                $IdStructs = $IdStructs.','.$varEtape->id_Structure;
+                $ArrayIdStruct[$varTypeColonne->nom]['idStruct'][] = $varEtape->id_Structure;
                 $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
             }
             $IdStructs = substr($IdStructs, 1);
@@ -880,13 +911,18 @@ class Controle extends CI_Controller
             $SuperQuery = $SuperQuery." ALTER TABLE TMP_data ADD Nom_Type_Colonne varchar(25); CREATE TEMPORARY TABLE TMP_struct AS(SELECT TMP_data.id_Structure,id_Colonne FROM structure INNER JOIN TMP_data ON TMP_data.id_Structure = structure.id_Structure); CREATE TEMPORARY TABLE TMP_colonne AS(SELECT TMP_struct.id_Colonne,id_Type_Colonne FROM colonne INNER JOIN TMP_struct ON TMP_struct.id_Colonne = colonne.id_Colonne); CREATE TEMPORARY TABLE TMP_Type_Colonne AS(SELECT type_colonne.* FROM type_colonne INNER JOIN TMP_colonne ON TMP_colonne.id_Type_Colonne = type_colonne.id_Type_Colonne);";
             $UpdateQuery = "";
             $TempTableQuery = "";
+            var_dump($idIndic);
+            var_dump($ArrayIdStruct);
             foreach($ArrayIdStruct as $nomtype => $KeyStruct)
             {
                 $KeyStruct = $ArrayIdStruct[$nomtype]['idStruct'];
-                $UpdateQuery = $UpdateQuery."UPDATE TMP_data
-SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Type_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = $KeyStruct)
-WHERE id_Structure = $KeyStruct;";
-                $TempTableQuery = $TempTableQuery."CREATE TEMPORARY TABLE TMP_data_$nomtype AS (SELECT id_data as id_data_$nomtype,num_ligne_excel as num_ligne_excel_$nomtype,data as data_$nomtype FROM TMP_data WHERE Nom_Type_Colonne = '$nomtype');";
+                for($s=0;$s<=count($KeyStruct)-1;$s++)
+                {
+                    $UpdateQuery = $UpdateQuery."UPDATE TMP_data
+SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Type_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = $KeyStruct[$s])
+WHERE id_Structure = $KeyStruct[$s];";
+                    $TempTableQuery = $TempTableQuery."CREATE TEMPORARY TABLE TMP_data_$nomtype AS (SELECT id_data as id_data_$nomtype,num_ligne_excel as num_ligne_excel_$nomtype,data as data_$nomtype FROM TMP_data WHERE Nom_Type_Colonne = '$nomtype');";
+                }
             }
             $SuperQuery = $SuperQuery.$UpdateQuery.$TempTableQuery;
 
@@ -924,27 +960,19 @@ WHERE id_Structure = $KeyStruct;";
                 {
                     //TODO : Ajouter "valeursql dans la BDD pour mieux gérer les opérateurs"
                     if($nomtype != "Identifiant") {
-                        $valeursql = "SUM(";
-                        $CalcQuery = $CalcQuery . "," . $valeursql . "data_" . $nomtype . ")";
+                        if($nomtype == "Montant" || $nomtype == "Anomalie")
+                        {
+                            $valeursql = "SUM(ABS(";
+                            $CalcQuery = $CalcQuery . "," . $valeursql . "data_" . $nomtype . "))";
+                        }
                     }
                 }
             }
             $CalcQuery = $CalcQuery . "FROM TMP_Sorted GROUP BY data_Identifiant;";
             $SuperQuery = $SuperQuery . $CalcQuery;
-            var_dump($Indicateur->execute_super_query($SuperQuery));
+            //var_dump($Indicateur->execute_super_query($SuperQuery));
         }
-    }
 
-    function has_next($array) {
-        if (is_array($array)) {
-            if (next($array) === false) {
-                return false;
-            } else {
-                return true;
-            }
-        } else {
-            return false;
-        }
     }
 
     //Parcour des différentes données colonnes identifiantes (Actuellement, en fonction du CCS -> Colonne/TypeColonne non géré dynamiquement)
