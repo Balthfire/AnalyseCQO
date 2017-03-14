@@ -16,6 +16,10 @@
             <label for="varchar">Valeur <?php echo form_error('valeur') ?></label>
             <input type="text" class="form-control" name="valeur" id="valeur" placeholder="Valeur" value="<?php echo $valeur; ?>" />
         </div>
+	    <div class="form-group">
+            <label for="varchar">Valeursql <?php echo form_error('valeursql') ?></label>
+            <input type="text" class="form-control" name="valeursql" id="valeursql" placeholder="Valeursql" value="<?php echo $valeursql; ?>" />
+        </div>
 	    <input type="hidden" name="id_Operateur" value="<?php echo $id_Operateur; ?>" /> 
 	    <button type="submit" class="btn btn-primary"><?php echo $button ?></button> 
 	    <a href="<?php echo site_url('operateur') ?>" class="btn btn-default">Cancel</a>

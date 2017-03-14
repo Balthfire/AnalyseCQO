@@ -10,10 +10,10 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Indicateur List</h2>
+        <h2 style="margin-top:0px">Query List</h2>
         <div class="row" style="margin-bottom: 10px">
             <div class="col-md-4">
-                <?php echo anchor(site_url('indicateur/create'),'Create', 'class="btn btn-primary"'); ?>
+                <?php echo anchor(site_url('query/create'),'Create', 'class="btn btn-primary"'); ?>
             </div>
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
@@ -23,7 +23,7 @@
             <div class="col-md-1 text-right">
             </div>
             <div class="col-md-3 text-right">
-                <form action="<?php echo site_url('indicateur/index'); ?>" class="form-inline" method="get">
+                <form action="<?php echo site_url('query/index'); ?>" class="form-inline" method="get">
                     <div class="input-group">
                         <input type="text" class="form-control" name="q" value="<?php echo $q; ?>">
                         <span class="input-group-btn">
@@ -31,7 +31,7 @@
                                 if ($q <> '')
                                 {
                                     ?>
-                                    <a href="<?php echo site_url('indicateur'); ?>" class="btn btn-default">Reset</a>
+                                    <a href="<?php echo site_url('query'); ?>" class="btn btn-default">Reset</a>
                                     <?php
                                 }
                             ?>
@@ -44,26 +44,26 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>Nom</th>
-		<th>Id Controle</th>
-		<th>Id Type Indicateur</th>
+		<th>Query</th>
+		<th>Ordre</th>
+		<th>Id Indicateur</th>
 		<th>Action</th>
             </tr><?php
-            foreach ($indicateur_data as $indicateur)
+            foreach ($query_data as $query)
             {
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $indicateur->nom ?></td>
-			<td><?php echo $indicateur->id_Controle ?></td>
-			<td><?php echo $indicateur->id_Type_Indicateur ?></td>
+			<td><?php echo $query->query ?></td>
+			<td><?php echo $query->ordre ?></td>
+			<td><?php echo $query->id_Indicateur ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('indicateur/read/'.$indicateur->id_Indicateur),'Read'); 
+				echo anchor(site_url('query/read/'.$query->id_Query),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/update/'.$indicateur->id_Indicateur),'Update'); 
+				echo anchor(site_url('query/update/'.$query->id_Query),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('indicateur/delete/'.$indicateur->id_Indicateur),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('query/delete/'.$query->id_Query),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

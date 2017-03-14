@@ -10,11 +10,12 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Operateur Read</h2>
+        <h2 style="margin-top:0px">Query Read</h2>
         <table class="table">
-	    <tr><td>Valeur</td><td><?php echo $valeur; ?></td></tr>
-	    <tr><td>Valeursql</td><td><?php echo $valeursql; ?></td></tr>
-	    <tr><td></td><td><a href="<?php echo site_url('operateur') ?>" class="btn btn-default">Cancel</a></td></tr>
+	    <tr><td>Query</td><td><?php echo $query; ?></td></tr>
+	    <tr><td>Ordre</td><td><?php echo $ordre; ?></td></tr>
+	    <tr><td>Id Indicateur</td><td><?php echo $id_Indicateur; ?></td></tr>
+	    <tr><td></td><td><a href="<?php echo site_url('query') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>
 </html>

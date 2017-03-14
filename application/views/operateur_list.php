@@ -45,6 +45,7 @@
             <tr>
                 <th>No</th>
 		<th>Valeur</th>
+		<th>Valeursql</th>
 		<th>Action</th>
             </tr><?php
             foreach ($operateur_data as $operateur)
@@ -53,6 +54,7 @@
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
 			<td><?php echo $operateur->valeur ?></td>
+			<td><?php echo $operateur->valeursql ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('operateur/read/'.$operateur->id_Operateur),'Read'); 

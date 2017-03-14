@@ -13,6 +13,7 @@
         <h2 style="margin-top:0px">Type_colonne Read</h2>
         <table class="table">
 	    <tr><td>Nom</td><td><?php echo $nom; ?></td></tr>
+	    <tr><td>IsIdentifiant</td><td><?php echo $isIdentifiant; ?></td></tr>
 	    <tr><td></td><td><a href="<?php echo site_url('type_colonne') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>

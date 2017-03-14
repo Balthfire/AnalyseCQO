@@ -2,7 +2,7 @@
 <!doctype html>
 <html>
     <head>
-        <title>harviacode.com - codeigniter crud generator</title>
+        <title>Nouveau Contrôle</title>
         <style>
             body{
                 padding: 15px;
@@ -15,6 +15,14 @@
 	    <div class="form-group">
             <label for="varchar">Nom <?php echo form_error('nom') ?></label>
             <input type="text" class="form-control" name="nom" id="nom" placeholder="Nom" value="<?php echo $nom; ?>" />
+        </div>
+	    <div class="form-group">
+            <label for="int">Annee <?php echo form_error('annee') ?></label>
+            <input type="text" class="form-control" name="annee" id="annee" placeholder="Annee" value="<?php echo $annee; ?>" />
+        </div>
+	    <div class="form-group">
+            <label for="int">Vague <?php echo form_error('vague') ?></label>
+            <input type="text" class="form-control" name="vague" id="vague" placeholder="Vague" value="<?php echo $vague; ?>" />
         </div>
 	    <div class="form-group">
             <label for="varchar">NNI <?php echo form_error('NNI') ?></label>

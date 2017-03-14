@@ -16,7 +16,7 @@ class Controle extends CI_Controller
     {
         $q = urldecode($this->input->get('q', TRUE));
         $start = intval($this->input->get('start'));
-        
+
         if ($q <> '') {
             $config['base_url'] = base_url() . 'controle/index.html?q=' . urlencode($q);
             $config['first_url'] = base_url() . 'controle/index.html?q=' . urlencode($q);
@@ -43,15 +43,17 @@ class Controle extends CI_Controller
         $this->load->view('controle_list', $data);
     }
 
-    public function read($id) 
+    public function read($id)
     {
         $row = $this->Controle_model->get_by_id($id);
         if ($row) {
             $data = array(
-		'id_Controle' => $row->id_Controle,
-		'nom' => $row->nom,
-		'NNI' => $row->NNI,
-	    );
+                'id_Controle' => $row->id_Controle,
+                'nom' => $row->nom,
+                'annee' => $row->annee,
+                'vague' => $row->vague,
+                'NNI' => $row->NNI,
+            );
             $this->load->view('controle_read', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
@@ -59,19 +61,21 @@ class Controle extends CI_Controller
         }
     }
 
-    public function create() 
+    public function create()
     {
         $data = array(
             'button' => 'Create',
-            'action' => site_url('index.php/controle/create_action'),
-	    'id_Controle' => set_value('id_Controle'),
-	    'nom' => set_value('nom'),
-	    'NNI' => set_value('NNI'),
-	);
+            'action' => site_url('controle/create_action'),
+            'id_Controle' => set_value('id_Controle'),
+            'nom' => set_value('nom'),
+            'annee' => set_value('annee'),
+            'vague' => set_value('vague'),
+            'NNI' => set_value('NNI'),
+        );
         $this->load->view('controle_form', $data);
     }
-    
-    public function create_action() 
+
+    public function create_action()
     {
         $this->_rules();
 
@@ -79,36 +83,40 @@ class Controle extends CI_Controller
             $this->create();
         } else {
             $data = array(
-		'nom' => $this->input->post('nom',TRUE),
-		'NNI' => $this->input->post('NNI',TRUE),
-	    );
+                'nom' => $this->input->post('nom',TRUE),
+                'annee' => $this->input->post('annee',TRUE),
+                'vague' => $this->input->post('vague',TRUE),
+                'NNI' => $this->input->post('NNI',TRUE),
+            );
 
             $this->Controle_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('index.php/controle'));
+            redirect(site_url('controle'));
         }
     }
-    
-    public function update($id) 
+
+    public function update($id)
     {
         $row = $this->Controle_model->get_by_id($id);
 
         if ($row) {
             $data = array(
                 'button' => 'Update',
-                'action' => site_url('index.php/controle/update_action'),
+                'action' => site_url('controle/update_action'),
                 'id_Controle' => set_value('id_Controle', $row->id_Controle),
                 'nom' => set_value('nom', $row->nom),
+                'annee' => set_value('annee', $row->annee),
+                'vague' => set_value('vague', $row->vague),
                 'NNI' => set_value('NNI', $row->NNI),
-	        );
+            );
             $this->load->view('controle_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('controle'));
         }
     }
-    
-    public function update_action() 
+
+    public function update_action()
     {
         $this->_rules();
 
@@ -116,17 +124,19 @@ class Controle extends CI_Controller
             $this->update($this->input->post('id_Controle', TRUE));
         } else {
             $data = array(
-		'nom' => $this->input->post('nom',TRUE),
-		'NNI' => $this->input->post('NNI',TRUE),
-	    );
+                'nom' => $this->input->post('nom',TRUE),
+                'annee' => $this->input->post('annee',TRUE),
+                'vague' => $this->input->post('vague',TRUE),
+                'NNI' => $this->input->post('NNI',TRUE),
+            );
 
             $this->Controle_model->update($this->input->post('id_Controle', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('controle'));
         }
     }
-    
-    public function delete($id) 
+
+    public function delete($id)
     {
         $row = $this->Controle_model->get_by_id($id);
 
@@ -140,13 +150,15 @@ class Controle extends CI_Controller
         }
     }
 
-    public function _rules() 
+    public function _rules()
     {
-	$this->form_validation->set_rules('nom', 'nom', 'trim|required');
-	$this->form_validation->set_rules('NNI', 'nni', 'trim|required');
+        $this->form_validation->set_rules('nom', 'nom', 'trim|required');
+        $this->form_validation->set_rules('annee', 'annee', 'trim|required');
+        $this->form_validation->set_rules('vague', 'vague', 'trim|required');
+        $this->form_validation->set_rules('NNI', 'nni', 'trim|required');
 
-	$this->form_validation->set_rules('id_Controle', 'id_Controle', 'trim');
-	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+        $this->form_validation->set_rules('id_Controle', 'id_Controle', 'trim');
+        $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
     public function viewUploadExcel()
@@ -292,6 +304,7 @@ class Controle extends CI_Controller
         $this->load->model('Operateur_model');
         $operateur = new Operateur_model();
 
+        var_dump($idCtrl);
         $data = array(
             'idControle' => $idCtrl,
             'ArrayLinkedDatas' => $ArrayLinkedDatas,
@@ -467,13 +480,10 @@ class Controle extends CI_Controller
                         $numligne = $z + $datastart;
                         $valeur = $objWorksheet->getCell($lettrecolonne . $numligne)->getCalculatedValue();
                         $Strvaleur = strval($valeur);
-                        if (!is_null($valeur) AND strlen($Strvaleur)>0)
-                        {
+                        if (!is_null($valeur) AND strlen($Strvaleur)>0) {
                             $arrayData[$header] = $valeur;
                             $arrayLigne[$numligne] = $arrayData;
-                        }
-                        else
-                        {
+                        } else {
                             $arrayData[$header] = 0;
                             $arrayLigne[$numligne] = $arrayData;
                         }
@@ -729,6 +739,7 @@ class Controle extends CI_Controller
     {
         $ArrayIndicEtape = $this->GenerateEtape();
         $this->GenerateQuery2($ArrayIndicEtape);
+        //$this->GenerateQuery($ArrayIndicEtape);
     }
 
     public function GenerateEtape()
@@ -798,13 +809,6 @@ class Controle extends CI_Controller
 
     public function GenerateQuery($ArrayIndicEtape)
     {
-        //TODO : Ajout "valeurSQL" dans table Opérateur
-        //TODO : Ajout possible de table résultat contenant les requêtes à effectuer et l'ordre
-        //TODO : possibilité d'ajout de table "Partie" à type_colonne pour gérer le multicolonne
-        //TODO : fractionnement du code de GenerateQuery1
-        //TODO : Réécriture des méthodes sur les étapes
-
-
 
         $this->load->model("Etape_model");
         $this->load->model("Indicateur_model");
@@ -813,7 +817,10 @@ class Controle extends CI_Controller
         $this->load->model("Type_Colonne_model");
 
         $Etape = new Etape_model();
+
         $Indicateur = new Indicateur_model();
+        var_dump($Indicateur->testTransactions());
+        /*
         $Structure = new Structure_model();
         $Colonne = new Colonne_model();
         $Type_Colonne = new Type_colonne_model();
@@ -847,7 +854,7 @@ class Controle extends CI_Controller
                 $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
             }
             $IdStructs = substr($IdStructs, 1);
-        }
+        }*/
     }
 
     function has_next($array) {

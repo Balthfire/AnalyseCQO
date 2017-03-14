@@ -45,6 +45,7 @@
             <tr>
                 <th>No</th>
 		<th>Nom</th>
+		<th>IsIdentifiant</th>
 		<th>Action</th>
             </tr><?php
             foreach ($type_colonne_data as $type_colonne)
@@ -53,6 +54,7 @@
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
 			<td><?php echo $type_colonne->nom ?></td>
+			<td><?php echo $type_colonne->isIdentifiant ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('type_colonne/read/'.$type_colonne->id_Type_Colonne),'Read'); 

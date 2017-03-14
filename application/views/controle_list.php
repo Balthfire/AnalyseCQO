@@ -1,5 +1,4 @@
 <?php include 'headerbarrenav.php'; ?>
-
 <!doctype html>
 <html>
     <head>
@@ -13,13 +12,11 @@
         <h2 style="margin-top:0px">Controle List</h2>
         <div class="row" style="margin-bottom: 10px">
             <div class="col-md-4">
-                <?php echo anchor(site_url('index.php/controle/create'),'Create', 'class="btn btn-primary"'); ?>
+                <?php echo anchor(site_url('controle/create'),'Create', 'class="btn btn-primary"'); ?>
             </div>
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
                     <?php echo $this->session->userdata('message') <> '' ? $this->session->userdata('message') : ''; ?>
-                    <?php echo $this->session->userdata('message') <> '' ? $this->session->userdata('status') : ''; ?>
-
                 </div>
             </div>
             <div class="col-md-1 text-right">
@@ -45,9 +42,11 @@
         </div>
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
-		<th>Action</th>
-		<th>Nom</th>
-		<th>NNI</th>
+                <th>Action</th>
+                <th>Nom</th>
+                <th>Annee</th>
+                <th>Vague</th>
+                <th>NNI</th>
             </tr><?php
             foreach ($controle_data as $controle)
             {
@@ -55,11 +54,11 @@
         <tr>
             <td style="text-align:center" width="200px">
                 <?php
-                echo anchor(site_url('index.php/controle/read/'.$controle->id_Controle),'Read');
+                echo anchor(site_url('controle/read/'.$controle->id_Controle),'Read');
                 echo ' | ';
-                echo anchor(site_url('index.php/controle/update/'.$controle->id_Controle),'Update');
+                echo anchor(site_url('controle/update/'.$controle->id_Controle),'Update');
                 echo ' | ';
-                echo anchor(site_url('index.php/controle/delete/'.$controle->id_Controle),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                echo anchor(site_url('controle/delete/'.$controle->id_Controle),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                 echo ' | ';
                 echo anchor(site_url('index.php/controle/viewUploadExcel?idctrl='.$controle->id_Controle),'Excel');
                 echo ' | ';
@@ -67,6 +66,8 @@
                 ?>
             </td>
 			<td><?php echo $controle->nom ?></td>
+			<td><?php echo $controle->annee ?></td>
+			<td><?php echo $controle->vague ?></td>
 			<td><?php echo $controle->NNI ?></td>
 		</tr>
                 <?php
