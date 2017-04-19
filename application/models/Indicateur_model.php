@@ -20,11 +20,29 @@ class Indicateur_model extends CI_Model
         return $this->db->insert_id();
     }
 
-    function execute_super_query($superquery)
+    function execute_super_query($ArrayQueries)
     {
-        $query = $this->db->query($superquery);
-        $resultarray = $query->result_array();
+        $megaquery ="";
+        $this->db->trans_begin();
+        foreach($ArrayQueries as $id => $query){
+            if($id != "select")
+            {
+                $this->db->query($query);
+            } else {
+                $selectquery = $this->db->query($query);
+            }
+            $megaquery = $megaquery.$query;
+        }
+        $this->db->trans_complete();
+        $resultarray = $selectquery->result_array();
+        $resultarray['megaquery'] = $megaquery;
+        //$this->db->query($megaquery);
         return $resultarray;
+    }
+
+    function testmegaquery($megaquery)
+    {
+        $this->db->query($megaquery);
     }
 
     function testTransactions()

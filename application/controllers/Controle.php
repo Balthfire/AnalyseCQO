@@ -303,8 +303,6 @@ class Controle extends CI_Controller
     {
         $this->load->model('Operateur_model');
         $operateur = new Operateur_model();
-
-        var_dump($idCtrl);
         $data = array(
             'idControle' => $idCtrl,
             'ArrayLinkedDatas' => $ArrayLinkedDatas,
@@ -466,7 +464,7 @@ class Controle extends CI_Controller
 
             foreach($FeuillesExcel as $SheetName => $ColumnArray)
             {
-            //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
+                //TODO : Vérifier la récupération d'une même colonne plusieurs fois (colonneCCS x nbIndicateur)
                 $objPHPExcel->setActiveSheetIndexByName($SheetName);
                 $objWorksheet = $objPHPExcel->getActiveSheet();
                 $nbechant = $dataend - $datastart;
@@ -738,8 +736,8 @@ class Controle extends CI_Controller
     public function ProcessCalcul()
     {
         $ArrayIndicEtape = $this->GenerateEtape();
-        $this->GenerateQuery2($ArrayIndicEtape);
-        //$this->GenerateQuery($ArrayIndicEtape);
+        //$this->GenerateQuery2($ArrayIndicEtape);
+        $this->GenerateQuery($ArrayIndicEtape);
     }
 
     public function GenerateEtape()
@@ -760,7 +758,6 @@ class Controle extends CI_Controller
         foreach($ObjectFormula as $nomIndic => $ArrayDenoNum)
         {
             $nomtype = $nomIndic."_".date("Y");
-
             $RespArray = $Type_Indicateur->getIdByNom($nomtype);
 
             if(count($RespArray)<=0){
@@ -809,52 +806,314 @@ class Controle extends CI_Controller
 
     public function GenerateQuery($ArrayIndicEtape)
     {
-
         $this->load->model("Etape_model");
         $this->load->model("Indicateur_model");
         $this->load->model("Structure_model");
         $this->load->model("Colonne_model");
         $this->load->model("Type_Colonne_model");
-
-        $Etape = new Etape_model();
+        $this->load->model("Operateur_model");
+        $this->load->model("Agence_model");
 
         $Indicateur = new Indicateur_model();
-        var_dump($Indicateur->testTransactions());
-        /*
+        $ArrayResult = array();
+
+        $ArrayFeuilleStructOperateur = array();
+        foreach ($ArrayIndicEtape as $idIndic => $ArrayInfo) {
+            $ArrayFeuille = $this->GetIdStructsFromEtape($ArrayInfo);
+/*
+            foreach ($ArrayFeuille as $idFeuille => $ArrayTypeCol) {
+                $IdStructs = "";
+                foreach ($ArrayTypeCol as $nomTypeCol => $ArrayConteneur) {
+                    foreach ($ArrayConteneur as $conteneur => $ArrayInfos) {
+                        foreach ($ArrayInfos as $indice => $info) {
+                            if ($conteneur == "IdStructs") {
+                                $IdStructs = $IdStructs . "," . $info;
+                            }
+                        }
+                    }
+                }
+                $IdStructs = substr($IdStructs, 1);
+*/
+            foreach ($ArrayFeuille as $idFeuille => $ArrayTypeCol) {
+                $ArrayQueries = array();
+                $IdStructs = "";
+                foreach ($ArrayTypeCol as $nomTypeCol => $ArrayIdStruct) {
+                    foreach ($ArrayIdStruct as $idStruct => $ArrayOperateur) {
+                        $IdStructs = $IdStructs . "," . $idStruct;
+                        foreach ($ArrayOperateur as $indice => $operateur) {
+                            $ArrayFeuilleStructOperateur[$idIndic][$idFeuille][$idStruct][] = $operateur;
+                        }
+                    }
+                }
+                $IdStructs = substr($IdStructs, 1);
+                var_dump($IdStructs);
+
+
+                $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_data;";
+                $ArrayQueries[] = "CREATE TEMPORARY TABLE TMP_data AS(Select * FROM data WHERE id_Structure IN($IdStructs));";
+                //TODO : penser à une meilleure intégration (ces requêtes seront toujours utilisées par le processus)
+                $ArrayQueries[] = "ALTER TABLE TMP_data ADD Nom_Type_Colonne varchar(25);";
+                $ArrayQueries[] = "ALTER TABLE TMP_data ADD id_feuille INTEGER(25);";
+                $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_struct;";
+                $ArrayQueries[] = "CREATE TEMPORARY TABLE TMP_struct AS(SELECT TMP_data.id_Structure,id_Colonne,structure.id_feuille FROM structure INNER JOIN TMP_data ON TMP_data.id_Structure = structure.id_Structure);";
+                $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_colonne;";
+                $ArrayQueries[] = "CREATE TEMPORARY TABLE TMP_colonne AS(SELECT TMP_struct.id_Colonne,id_Type_Colonne FROM colonne INNER JOIN TMP_struct ON TMP_struct.id_Colonne = colonne.id_Colonne);";
+                $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_Type_Colonne;";
+                $ArrayQueries[] = "CREATE TEMPORARY TABLE TMP_Type_Colonne AS(SELECT type_colonne.* FROM type_colonne INNER JOIN TMP_colonne ON TMP_colonne.id_Type_Colonne = type_colonne.id_Type_Colonne);";
+
+                $Results = $this->GenerateUpdateQueries($ArrayTypeCol);
+                $ArrayQueries = array_merge($ArrayQueries, $Results['Queries']);
+                /* $TempTables = $Results['TempTables'];
+                 $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_Sorted;";
+                 $ArrayQueries[] = $this->GenerateJoinQuery($TempTables);
+                 $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_Sorted2;";
+                 $ArrayQueries[] = "CREATE TEMPORARY TABLE TMP_Sorted2 as (SELECT * FROM TMP_Sorted);";
+                 $ArrayQueries['select'] = $this->GenerateSelectQuery($ArrayTypeCol);
+                */
+                $ArrayQueries['select'] = "SELECT * FROM TMP_data";
+                $indic = $Indicateur->get_by_id($idIndic);
+                $result = $Indicateur->execute_super_query($ArrayQueries);
+                $megaquery = $result['megaquery'];
+                unset($result['megaquery']);
+                $ArrayResult[$idIndic][$idFeuille] = $result;
+            }
+        }
+
+        $FinalResult = array();
+        foreach ($ArrayResult as $IdIndic => $arrayfeuille) {
+            foreach ($arrayfeuille as $idFeuille => $ArrayDatas) {
+                foreach ($ArrayDatas as $indice => $ArrayDataResult) {
+                    $FinalResult[$IdIndic][$idFeuille][$ArrayDataResult['num_ligne_excel']][$ArrayDataResult['id_Structure']] = [$ArrayDataResult['data']];
+                }
+            }
+        }
+
+        $this->load->model("Feuille_model");
+        $feuilleModel = new Feuille_model();
+        $structModel = new Structure_model();
+        $colonneModel = new Colonne_model();
+        $TypeColModel = new Type_colonne_model();
+        $agenceModel = new Agence_model();
+        $indicateurModel = new Indicateur_model();
+        $operateurModel = new Operateur_model();
+
+
+        $ArrayFinalResult = array();
+        // Création d'un Array permettant d'identifier les identifiants et de noter les lignes du fichier leur correspondant
+        foreach ($FinalResult as $IdIndic => $ArrayIdFeuille) {
+            $GroupArray = array();
+            foreach ($ArrayIdFeuille as $IdFeuille => $ArrayNumLigne) {
+                foreach ($ArrayNumLigne as $numligne => $ArrayIdStructure) {
+                    foreach ($ArrayIdStructure as $idStructure => $ArrayData) {
+                        $structure = $structModel->get_by_id($idStructure);
+                        $colonne = $colonneModel->get_by_id($structure->id_Colonne);
+                        $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
+                        if ($typecolonne->isIdentifiant) {
+                            $GroupArray[$ArrayData[0]][$IdFeuille][] = $numligne;
+                        }
+                    }
+                }
+            }
+
+            // Remplacement des lignes par les données réelles afin de pouvoir appliquer les opérateurs
+            $CCSArray = array();
+            foreach($GroupArray as $Identifiant => $ArrayFeuille){
+                if(strlen($Identifiant) > 1) {
+                    $Agence = $agenceModel->get_by_id($Identifiant);
+                    foreach ($ArrayFeuille as $IdFeuille => $ArrayNumLigne) {
+                        foreach ($ArrayNumLigne as $indice => $numligne) {
+                            foreach ($ArrayIdFeuille[$IdFeuille][$numligne] as $idStructure => $ArrayData) {
+                                $structure = $structModel->get_by_id($idStructure);
+                                $colonne = $colonneModel->get_by_id($structure->id_Colonne);
+                                $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
+                                if (!($typecolonne->isIdentifiant)) {
+                                    $CCSArray[$Agence->nom][$idStructure][] = abs($ArrayData[0]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $ArrayFinalResult[$IdIndic]['total'] = array();
+            foreach($CCSArray as $NomAgence => $ArrayIdStructure){
+                foreach($ArrayIdStructure as $idStruct => $ArrayData){
+                    $struct = $structModel->get_by_id($idStruct);
+                    $col = $colonneModel->get_by_id($struct->id_Colonne);
+                    $TypeCol = $TypeColModel->get_by_id($col->id_Type_Colonne);
+                    $ArrayOperateur = $ArrayFeuilleStructOperateur[$IdIndic][$struct->id_feuille][$idStruct];
+                    foreach($ArrayOperateur as $indice => $idOperateur) {
+                        $operateur = $operateurModel->get_by_id($idOperateur);
+                        switch($operateur->valeur){
+                            case "NBVAL":
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom][] = count($ArrayData);
+                                    if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic]['total'])){
+                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += count($ArrayData);
+                                    } else {
+                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = count($ArrayData);
+                                    }
+                                break;
+                            case "SOMME":
+                                $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom][] = array_sum($ArrayData);
+                                if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic]['total'])){
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += array_sum($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = array_sum($ArrayData);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach($ArrayFinalResult as $id => $array)
+        {
+            $indic = $Indicateur->get_by_id($id);
+            var_dump($indic->nom);
+            var_dump($array);
+        }
+
+        //le nombre de totalcount n'est pas bon
+
+    }
+
+    function GetIdStructsFromEtape($ArrayInfo)
+    {
+        $Etape = new Etape_model();
         $Structure = new Structure_model();
         $Colonne = new Colonne_model();
         $Type_Colonne = new Type_colonne_model();
+        $ArrayIdStruct = array();
+        $ArrayFeuille = array();
 
-        foreach($ArrayIndicEtape as $idIndic => $ArrayInfo)
+        foreach($ArrayInfo['arrayEtapes'] as $key => $idEtape)
         {
-            $ArrayIdStruct = array();
-            $IdStructs ="";
-            $oldStruct ="";
-            $SuperQuery ="";
+            $varEtape = $Etape->get_by_id($idEtape);
+            $varStruct = $Structure->get_by_id($varEtape->id_Structure);
+            $varFeuille = $varStruct->id_feuille;
+            $varColonne = $Colonne->get_by_id($varStruct->id_Colonne);
+            $varTypeColonne = $Type_Colonne->get_by_id($varColonne->id_Type_Colonne);
 
-            foreach($ArrayInfo['arrayEtapes'] as $key => $idEtape)
-            {
-                $varEtape = $Etape->get_by_id($idEtape);
-                $varStruct = $Structure->get_by_id($varEtape->id_Structure);
-                $varColonne = $Colonne->get_by_id($varStruct->id_Colonne);
-                $varTypeColonne = $Type_Colonne->get_by_id($varColonne->id_Type_Colonne);
+            $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varFeuille);
+            $structIdent = $Resp[0]['id_Colonne'];
 
-                $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varStruct->id_feuille);
-                $structIdent = $Resp[0]['id_Colonne'];
-                if($oldStruct != $structIdent)
-                {
-                    $oldStruct = $structIdent;
-                    $IdStructs = $IdStructs.','.$structIdent;
+            if(!isset($ArrayFeuille[$varFeuille]['Identifiant'][$structIdent])){
+                $ArrayFeuille[$varFeuille]['Identifiant'][$structIdent][] = null ;
+            }
+            $ArrayFeuille[$varFeuille][$varTypeColonne->nom][$varStruct->id_Structure][] = $varEtape->id_Operateur;;
+
+            /*
+            if(!isset($ArrayFeuille[$varFeuille]['Identifiant']['IdStructs'])){
+                $ArrayFeuille[$varFeuille]['Identifiant']['IdStructs'][] = $structIdent;
+                $ArrayFeuille[$varFeuille]['Identifiant']['Operateurs'][] = null;
+            }
+            $ArrayFeuille[$varFeuille][$varTypeColonne->nom]['IdStructs'][] = $varStruct->id_Structure;
+            $ArrayFeuille[$varFeuille][$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
+            */
+        }
+
+        return($ArrayFeuille);
+    }
+    /*
+    function GetIdStructsFromEtape($ArrayInfo)
+    {
+        $Etape = new Etape_model();
+        $Structure = new Structure_model();
+        $Colonne = new Colonne_model();
+        $Type_Colonne = new Type_colonne_model();
+        $ArrayIdStruct = array();
+        $IdStructs="";
+
+        foreach($ArrayInfo['arrayEtapes'] as $key => $idEtape)
+        {
+            $varEtape = $Etape->get_by_id($idEtape);
+            $varStruct = $Structure->get_by_id($varEtape->id_Structure);
+            $varColonne = $Colonne->get_by_id($varStruct->id_Colonne);
+            $varTypeColonne = $Type_Colonne->get_by_id($varColonne->id_Type_Colonne);
+
+            $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varStruct->id_feuille);
+            $structIdent = $Resp[0]['id_Colonne'];
+            if(isset($ArrayIdStruct['Identifiant']['idStruct'])){
+                if(!in_array($structIdent,$ArrayIdStruct['Identifiant']['idStruct'])) {
                     $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
                     $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
-
+                    $IdStructs = $IdStructs.','.$structIdent;
                 }
-                $IdStructs = $IdStructs.','.$varEtape->id_Structure;
-                $ArrayIdStruct[$varTypeColonne->nom]['idStruct'][] = $varEtape->id_Structure;
-                $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
+            } else {
+                $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
+                $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
+                $IdStructs = $IdStructs.','.$structIdent;
             }
-            $IdStructs = substr($IdStructs, 1);
-        }*/
+            $IdStructs = $IdStructs.','.$varEtape->id_Structure;
+            $ArrayIdStruct[$varTypeColonne->nom]['idStruct'][] = $varEtape->id_Structure;
+            $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
+        }
+        $IdStructs = substr($IdStructs, 1);
+        $ArrayIdStruct['IdStructs'] = $IdStructs;
+        return($ArrayIdStruct);
+    }
+
+    function GenerateUpdateQueries($ArrayIdStruct)
+    {
+        $ArrayCreateTempTables = array();
+        $ArrayQueries = array();
+        $ArrayTempTable = array();
+        foreach($ArrayIdStruct as $nomtype => $KeyStruct)
+        {
+            $KeyStruct = $ArrayIdStruct[$nomtype]['IdStructs'];
+            $nomtable = "TMP_data_$nomtype";
+            $ArrayTempTable[$nomtype] = $nomtable;
+            for($s=0;$s<=count($KeyStruct)-1;$s++)
+            {
+                $ArrayQueries[] = "UPDATE TMP_data SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Type_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = $KeyStruct[$s]) WHERE id_Structure = $KeyStruct[$s];";
+                $ArrayQueries[] = "UPDATE TMP_data SET id_feuille =(SELECT DISTINCT id_feuille FROM TMP_struct WHERE id_structure = $KeyStruct[$s]) WHERE id_Structure = $KeyStruct[$s];";
+                $ArrayCreateTempTables[] = "DROP TEMPORARY TABLE IF EXISTS $nomtable;";
+                $ArrayCreateTempTables[] = "CREATE TEMPORARY TABLE $nomtable AS (SELECT id_data as id_data_$nomtype,num_ligne_excel as num_ligne_excel_$nomtype,data as data_$nomtype FROM TMP_data WHERE Nom_Type_Colonne = '$nomtype');";
+            }
+        }
+        $ArrayQueries = array_merge($ArrayQueries,$ArrayCreateTempTables);
+        $ArrayResult['Queries'] = $ArrayQueries;
+        $ArrayResult['TempTables'] = $ArrayTempTable;
+        return($ArrayResult);
+    }
+*/
+    function GenerateUpdateQueries($ArrayTypeColonne)
+    {
+        $ArrayQueries = array();
+        foreach($ArrayTypeColonne as $nomTypeColonne => $ArrayIdStruct) {
+            foreach($ArrayIdStruct as $idStruct => $ArrayOperateur){
+                $ArrayQueries[] = "UPDATE TMP_data SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Type_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = $idStruct) WHERE id_Structure = $idStruct;";
+                $ArrayQueries[] = "UPDATE TMP_data SET id_feuille =(SELECT DISTINCT id_feuille FROM TMP_struct WHERE id_structure = $idStruct) WHERE id_Structure = $idStruct;";
+            }
+        }
+        $ArrayResult['Queries'] = $ArrayQueries;
+        return($ArrayResult);
+    }
+
+    function GenerateJoinQuery($TempTables)
+    {
+        $JoinQuery = "CREATE TEMPORARY TABLE TMP_Sorted AS(SELECT * FROM ";
+        $TempTables2 = $TempTables;
+        next($TempTables2);
+        $first = true;
+        foreach($TempTables as $nomtype => $nomtable) {
+            $nomtype2 = key($TempTables2);
+            $nomtable2 = $TempTables2[$nomtype2];
+            if ($first) {
+                $JoinQuery = $JoinQuery . "$nomtable INNER JOIN $nomtable2 ON $nomtable.num_ligne_excel_$nomtype=$nomtable2.num_ligne_excel_$nomtype2 ";
+                $first = false;
+            } else {
+                $JoinQuery = $JoinQuery . "INNER JOIN $nomtable2 ON $nomtable.num_ligne_excel_$nomtype=$nomtable2.num_ligne_excel_$nomtype2 ";
+            }
+            if ($this->has_next($TempTables2)) {
+                next($TempTables2);
+            } else {
+                break;
+            }
+        }
+        $JoinQuery = $JoinQuery .");";
+        return($JoinQuery);
     }
 
     function has_next($array) {
@@ -867,6 +1126,89 @@ class Controle extends CI_Controller
         } else {
             return false;
         }
+    }
+
+    function GenerateSelectQuery($ArrayIdStruct)
+    {
+        $this->load->model("Operateur_model");
+        $this->load->model("Type_Colonne_model");
+        $OperateurModel = new Operateur_model();
+        $TypeColModel = new Type_colonne_model();
+        $SelectQuery = "SELECT ";
+        $varSelect = "";
+        $FromQuery = " FROM TMP_Sorted";
+        $varFrom = "";
+        $WhereQuery = "";
+        $varWhere = "";
+        $GroupQuery = "GROUP BY ";
+        $varGroup = "";
+        $i=0;
+        $lastnomtype="";
+        foreach($ArrayIdStruct as $nomtype => $value) {
+            if($nomtype != $lastnomtype){
+                $i=0;
+            }
+            $typecol = $TypeColModel->get_by_nom($nomtype);
+            $ArrayOperateurs = $ArrayIdStruct[$nomtype]['Operateurs'];
+            $count = count($ArrayOperateurs);
+            $idOp = $ArrayOperateurs[$i];
+            $operateur = $OperateurModel->get_by_id($idOp);
+            if($typecol->isIdentifiant){
+                //A remplacer par CCS
+                switch($typecol->nom){
+                    case "Identifiant":
+                        $varSelect = $varSelect . ",nom as Agence";
+                        $varFrom = $varFrom.",agence ";
+                        $varWhere = $varWhere." WHERE TMP_Sorted.data_Identifiant=agence.CCS ";
+                        $varGroup = $varGroup.",nom";
+                        break;
+                    case "DMR":
+                        $varSelect = $varSelect . ",COUNT(DISTINCT(data_DMR)) AS NbDMR";
+                        break;
+                    default:
+                        $varSelect = $varSelect . ",data_$typecol->nom AS $typecol->nom";
+                        $varGroup = $varGroup.",data_$typecol->nom";
+                        break;
+                }
+            } else {
+                if($typecol->nom == "Montant" || $typecol->nom == "Nombre")
+                {
+                    $varSelect = $varSelect . ",ROUND((($operateur->valeursql(ABS(data_$typecol->nom)))/2),2) as $typecol->nom";
+                } else {
+                    $varSelect = $varSelect . ",ROUND(($operateur->valeursql(ABS(data_$typecol->nom))),2) as $typecol->nom";
+                }
+            }
+            if($i<$count) {
+                $i++;
+            }
+            $lastnomtype = $nomtype;
+        }
+
+        if(key_exists("Anomalie",$ArrayIdStruct) && key_exists("Montant",$ArrayIdStruct)){
+            $varSelect = $varSelect . ",ROUND((SUM(ABS(data_Anomalie))/((SUM(ABS(data_Montant)))/2)*100),2) as 'Anomalie/Montant'";
+            $varSelect = $varSelect . ",ROUND(((SUM(ABS(data_Anomalie)))/((SELECT((SUM(ABS(data_Montant)))/2) FROM TMP_Sorted2)))*100 ,2) as 'Anomalie/MontantTotal'";
+        }
+        if(key_exists("NbAnomalie",$ArrayIdStruct) && key_exists("Nombre",$ArrayIdStruct)){
+            $varSelect = $varSelect . ",ROUND((SUM(ABS(data_NbAnomalie))/((COUNT(ABS(data_Nombre)))/2)*100),2) as 'NbAnomalie/NbAgence'";
+            $varSelect = $varSelect . ",ROUND((SUM(ABS(data_NbAnomalie))/((SELECT((COUNT(ABS(data_Nombre)))/2)  FROM TMP_Sorted2)))*100,2) as 'NbAnomalie/NbTotal'";
+        }
+
+        $varSelect = $this->CheckComma($varSelect);
+        $varGroup = $this->CheckComma($varGroup);
+        $varWhere = $this->CheckComma($varWhere);
+
+        $SelectQuery = $SelectQuery . $varSelect;
+        $FromQuery = $FromQuery . $varFrom;
+        $WhereQuery = $WhereQuery . $varWhere;
+        $GroupQuery = $GroupQuery . $varGroup;
+        return($SelectQuery.$FromQuery.$WhereQuery.$GroupQuery);
+    }
+
+    function CheckComma($var){
+        if((strpos($var,",")) == 0) {
+            $var = substr($var,1);
+        }
+        return($var);
     }
 
     public function GenerateQuery2($ArrayIndicEtape){
@@ -898,15 +1240,15 @@ class Controle extends CI_Controller
                 $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varStruct->id_feuille);
                 $structIdent = $Resp[0]['id_Colonne'];
                 if(isset($ArrayIdStruct['Identifiant']['idStruct'])){
-                    if(!in_array($structIdent,$ArrayIdStruct['Identifiant']['idStruct']))
-                    {
+                    if(!in_array($structIdent,$ArrayIdStruct['Identifiant']['idStruct'])) {
                         $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
                         $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
+                        $IdStructs = $IdStructs.','.$structIdent;
                     }
-                }
-                else{
+                } else {
                     $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
                     $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
+                    $IdStructs = $IdStructs.','.$structIdent;
                 }
                 $IdStructs = $IdStructs.','.$varEtape->id_Structure;
                 $ArrayIdStruct[$varTypeColonne->nom]['idStruct'][] = $varEtape->id_Structure;
@@ -932,7 +1274,6 @@ WHERE id_Structure = $KeyStruct[$s];";
                 }
             }
             $SuperQuery = $SuperQuery.$UpdateQuery.$TempTableQuery;
-
             $LastQuery = "CREATE TEMPORARY TABLE TMP_Sorted AS(SELECT * FROM ";
             $TempArrayIdStruct1 = $ArrayIdStruct;
             $TempArrayIdStruct2 = $ArrayIdStruct;
@@ -977,7 +1318,7 @@ WHERE id_Structure = $KeyStruct[$s];";
             }
             $CalcQuery = $CalcQuery . "FROM TMP_Sorted GROUP BY data_Identifiant;";
             $SuperQuery = $SuperQuery . $CalcQuery;
-            //var_dump($Indicateur->execute_super_query($SuperQuery));
+            var_dump($Indicateur->execute_super_query($SuperQuery));
         }
 
     }
@@ -1107,7 +1448,7 @@ WHERE id_Structure = $KeyStruct[$s];";
                 foreach($ArrayColonne as $header => $ArrayMedium)
                 {
                     switch($header) {
-                            case 'Montant':
+                        case 'Montant':
                             foreach ($ArrayMedium as $indice => $ArrayData)
                             {
                                 if (array_key_exists($CCS,$MontantParCCS))
@@ -1327,150 +1668,150 @@ WHERE id_Structure = $KeyStruct[$s];";
     /**
     public function ajoutExcel()
     {
-        $this->load->model("Controle_model");
-        $controle = new Controle_model();
-        $c = $controle->get_by_id('id_Controle');
-        $config['upload_path'] = './temp/';
-        $config['allowed_types'] = 'xlsx';
-        $config['max_size'] = '400000000000000000';
-        $config['encrypt_name'] = false;
-        $this->load->library('upload', $config);
-        $this->upload->initialize($config);
+    $this->load->model("Controle_model");
+    $controle = new Controle_model();
+    $c = $controle->get_by_id('id_Controle');
+    $config['upload_path'] = './temp/';
+    $config['allowed_types'] = 'xlsx';
+    $config['max_size'] = '400000000000000000';
+    $config['encrypt_name'] = false;
+    $this->load->library('upload', $config);
+    $this->upload->initialize($config);
 
-        if (!$this->upload->do_upload('fichier_xl')) {
-            $this->session->set_flashdata('status', '<div class="alert alert-danger">' . $this->upload->display_errors() . '</div>');
-            redirect('index.php/Cconnexion/index');
-        } else {
-            $this->load->library('excel');
-            $objReader = PHPExcel_IOFactory::createReader("Excel2007");
-            $objReader->setReadDataOnly(true);
-            $data = $this->upload->data();
-            $objPHPExcel = $objReader->load($data['full_path']);
+    if (!$this->upload->do_upload('fichier_xl')) {
+    $this->session->set_flashdata('status', '<div class="alert alert-danger">' . $this->upload->display_errors() . '</div>');
+    redirect('index.php/Cconnexion/index');
+    } else {
+    $this->load->library('excel');
+    $objReader = PHPExcel_IOFactory::createReader("Excel2007");
+    $objReader->setReadDataOnly(true);
+    $data = $this->upload->data();
+    $objPHPExcel = $objReader->load($data['full_path']);
 
-            // TODO : Modifier le intval -> internet
-            $this->load->model("Fichier_model");
-            $this->load->model("Feuille_model");
-            $this->load->model("Cellule_model");
+    // TODO : Modifier le intval -> internet
+    $this->load->model("Fichier_model");
+    $this->load->model("Feuille_model");
+    $this->load->model("Cellule_model");
 
-            $fichier = new Fichier_model();
-            $datafichier = array(
-                'libelle' => "lib1",
-                'id_Controle' => $this->input->post('id_Controle',TRUE)
-            );
-            $idfichier = $fichier->insertReturn($datafichier);
+    $fichier = new Fichier_model();
+    $datafichier = array(
+    'libelle' => "lib1",
+    'id_Controle' => $this->input->post('id_Controle',TRUE)
+    );
+    $idfichier = $fichier->insertReturn($datafichier);
 
-            $name = $objPHPExcel->getSheetNames();
-            $nombrefeuille = count($name);
-
-
-            for ($nbF = 0; $nbF < $nombrefeuille; $nbF++) {
-            $objWorksheet = $objPHPExcel->getSheet($nbF);
-            $row = intval($objWorksheet->getHighestDataRow());
-            $stringCol = $objWorksheet->getHighestDataColumn();
-            $indexCol = PHPExcel_Cell::columnIndexFromString($stringCol);
-            $feuille = new Feuille_model();
-            // TODO : gérer le numpage et l'id_controle dynamiquement
-            // TODO : gérer le htaccess (danscache)
-            $datafeuille = array(
-            'nb_ligne' => $row,
-            'nb_colonne' => $indexCol,
-            'num_page' => $nbF,
-            'id_Fichier' => $idfichier
-            );
-            $idFeuille = $feuille->insertReturn($datafeuille);
-            $cellule = new Cellule_model();
-
-            // x = colonne  y = ligne
-            for ($x = 0; $x < $indexCol; $x++) {
-            for ($y = 0; $y < $row; $y++) {
-            $colString = PHPExcel_Cell::stringFromColumnIndex($x);
-            //TODO : Fonction getCalculatedValue : bug lors de sélection de colonne complète (D:D) pour calcul
-
-            //$cellvalue = $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->getCalculatedValue();
-
-            // Gestion de l'erreur cité ci-dessus
-            $indiceCheck = 0;
-            foreach ($name as $nomfeuille) {
-            $cellValueFinal = "";
-            $cellValueOrigin = $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->getValue();
-            $nbSpaceFeuille = substr_count($nomfeuille," ");
-
-            if ($nbSpaceFeuille > 0)
-            $strSearch = "'" . $nomfeuille . "'!";
-            else
-            $strSearch = $nomfeuille . "!";
-
-            $nbOccurence = substr_count($cellValueOrigin, $strSearch);
-            if ($nbOccurence > 0) {
-            $lenStrSearch = strlen($strSearch);
-            $lenOriginal = strlen($cellValueOrigin);
-            $chrSearch = ":";
-            $posChrSearch = strpos($cellValueOrigin, $chrSearch);
-            $lastPosChrSearch = strrpos($cellValueOrigin, $chrSearch);
-
-            $posStart = 0;
-            $var = "";
+    $name = $objPHPExcel->getSheetNames();
+    $nombrefeuille = count($name);
 
 
-            $posOccurence = 1;
-            for ($z = 0; $z <= $nbOccurence; $z++) {
+    for ($nbF = 0; $nbF < $nombrefeuille; $nbF++) {
+    $objWorksheet = $objPHPExcel->getSheet($nbF);
+    $row = intval($objWorksheet->getHighestDataRow());
+    $stringCol = $objWorksheet->getHighestDataColumn();
+    $indexCol = PHPExcel_Cell::columnIndexFromString($stringCol);
+    $feuille = new Feuille_model();
+    // TODO : gérer le numpage et l'id_controle dynamiquement
+    // TODO : gérer le htaccess (danscache)
+    $datafeuille = array(
+    'nb_ligne' => $row,
+    'nb_colonne' => $indexCol,
+    'num_page' => $nbF,
+    'id_Fichier' => $idfichier
+    );
+    $idFeuille = $feuille->insertReturn($datafeuille);
+    $cellule = new Cellule_model();
 
-            $searchChr = ":";
-            $posSearch = strpos($cellValueOrigin, $searchChr, $posOccurence);
-            $posNomFeuille = strpos($cellValueOrigin, $nomfeuille, $posOccurence);
+    // x = colonne  y = ligne
+    for ($x = 0; $x < $indexCol; $x++) {
+    for ($y = 0; $y < $row; $y++) {
+    $colString = PHPExcel_Cell::stringFromColumnIndex($x);
+    //TODO : Fonction getCalculatedValue : bug lors de sélection de colonne complète (D:D) pour calcul
 
-            if ($indiceCheck >= 1) {
-            for ($num = 1; $num < $indiceCheck; $num++) {
-            $posOccurence = $posSearch + 1;
-            $posSearch = strpos($cellValueOrigin, $searchChr, $posOccurence);
-            }
-            }
-            $posSearch = strpos($cellValueOrigin, $searchChr, $posOccurence);
+    //$cellvalue = $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->getCalculatedValue();
 
-            $chrAvant = substr($cellValueOrigin, $posSearch - 1, 1);
-            $chrApres = substr($cellValueOrigin, $posSearch + 1, 1);
+    // Gestion de l'erreur cité ci-dessus
+    $indiceCheck = 0;
+    foreach ($name as $nomfeuille) {
+    $cellValueFinal = "";
+    $cellValueOrigin = $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->getValue();
+    $nbSpaceFeuille = substr_count($nomfeuille," ");
 
-            if ($chrApres == $chrAvant AND $chrApres != " ") {
-            $strPosToEnd = substr($cellValueOrigin, $posSearch + 2);
-            $lengthStrAfterPos = strlen($strPosToEnd);
-            $originalLength = strlen($cellValueOrigin);
-            $lengthStrBefPos = $originalLength - $lengthStrAfterPos - 4;
-            $strStartToPos = substr($cellValueOrigin, 0, $lengthStrBefPos);
+    if ($nbSpaceFeuille > 0)
+    $strSearch = "'" . $nomfeuille . "'!";
+    else
+    $strSearch = $nomfeuille . "!";
 
-            $objWorksheet = $objPHPExcel->getSheetByName($nomfeuille);
-            $nbLigneFeuilleMin = 1;
-            $nbLigneFeuilleMax = intval($objWorksheet->getHighestDataRow());
+    $nbOccurence = substr_count($cellValueOrigin, $strSearch);
+    if ($nbOccurence > 0) {
+    $lenStrSearch = strlen($strSearch);
+    $lenOriginal = strlen($cellValueOrigin);
+    $chrSearch = ":";
+    $posChrSearch = strpos($cellValueOrigin, $chrSearch);
+    $lastPosChrSearch = strrpos($cellValueOrigin, $chrSearch);
 
-            $cellValueFinal = $strStartToPos . "!" . $chrAvant . $nbLigneFeuilleMin . $searchChr . $chrApres . $nbLigneFeuilleMax . $strPosToEnd;
-            $indiceCheck++;
-            $chips = array($colString . $y => $cellValueFinal);
+    $posStart = 0;
+    $var = "";
 
 
-            }
-            $posOccurence = $posSearch + 1;
-            $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->setValue($cellValueFinal);
-            }
-            }
-            }
+    $posOccurence = 1;
+    for ($z = 0; $z <= $nbOccurence; $z++) {
 
-            $cellvalue = $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->getCalculatedValue();
+    $searchChr = ":";
+    $posSearch = strpos($cellValueOrigin, $searchChr, $posOccurence);
+    $posNomFeuille = strpos($cellValueOrigin, $nomfeuille, $posOccurence);
 
-            if ($cellvalue != NULL) {
-            $datacellule = array(
-            'pos_x' => $x,
-            'pos_y' => $y,
-            'valeur' => $cellvalue,
-            'id_Feuille' => $idFeuille,
+    if ($indiceCheck >= 1) {
+    for ($num = 1; $num < $indiceCheck; $num++) {
+    $posOccurence = $posSearch + 1;
+    $posSearch = strpos($cellValueOrigin, $searchChr, $posOccurence);
+    }
+    }
+    $posSearch = strpos($cellValueOrigin, $searchChr, $posOccurence);
 
-            );
-            $cellule->insert($datacellule);
-            }
-            }
-            }
-            }
+    $chrAvant = substr($cellValueOrigin, $posSearch - 1, 1);
+    $chrApres = substr($cellValueOrigin, $posSearch + 1, 1);
 
-            redirect('index.php/controle/viewAjoutExcel');
-        }
+    if ($chrApres == $chrAvant AND $chrApres != " ") {
+    $strPosToEnd = substr($cellValueOrigin, $posSearch + 2);
+    $lengthStrAfterPos = strlen($strPosToEnd);
+    $originalLength = strlen($cellValueOrigin);
+    $lengthStrBefPos = $originalLength - $lengthStrAfterPos - 4;
+    $strStartToPos = substr($cellValueOrigin, 0, $lengthStrBefPos);
+
+    $objWorksheet = $objPHPExcel->getSheetByName($nomfeuille);
+    $nbLigneFeuilleMin = 1;
+    $nbLigneFeuilleMax = intval($objWorksheet->getHighestDataRow());
+
+    $cellValueFinal = $strStartToPos . "!" . $chrAvant . $nbLigneFeuilleMin . $searchChr . $chrApres . $nbLigneFeuilleMax . $strPosToEnd;
+    $indiceCheck++;
+    $chips = array($colString . $y => $cellValueFinal);
+
+
+    }
+    $posOccurence = $posSearch + 1;
+    $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->setValue($cellValueFinal);
+    }
+    }
+    }
+
+    $cellvalue = $objPHPExcel->setActiveSheetIndex($nbF)->getCell($colString . $y)->getCalculatedValue();
+
+    if ($cellvalue != NULL) {
+    $datacellule = array(
+    'pos_x' => $x,
+    'pos_y' => $y,
+    'valeur' => $cellvalue,
+    'id_Feuille' => $idFeuille,
+
+    );
+    $cellule->insert($datacellule);
+    }
+    }
+    }
+    }
+
+    redirect('index.php/controle/viewAjoutExcel');
+    }
     }*/
 }
 
