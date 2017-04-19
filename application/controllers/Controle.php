@@ -937,6 +937,7 @@ class Controle extends CI_Controller
 
             $ArrayFinalResult[$IdIndic]['total'] = array();
             foreach($CCSArray as $NomAgence => $ArrayIdStructure){
+                $ArrayFinalResult[$IdIndic][$NomAgence] = array();
                 foreach($ArrayIdStructure as $idStruct => $ArrayData){
                     $struct = $structModel->get_by_id($idStruct);
                     $col = $colonneModel->get_by_id($struct->id_Colonne);
@@ -946,15 +947,25 @@ class Controle extends CI_Controller
                         $operateur = $operateurModel->get_by_id($idOperateur);
                         switch($operateur->valeur){
                             case "NBVAL":
-                                    $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom][] = count($ArrayData);
-                                    if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic]['total'])){
-                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += count($ArrayData);
-                                    } else {
-                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = count($ArrayData);
-                                    }
+                                if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic][$NomAgence])){
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom] += count($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom] = count($ArrayData);
+                                }
+
+                                if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic]['total'])){
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += count($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = count($ArrayData);
+                                }
                                 break;
                             case "SOMME":
-                                $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom][] = array_sum($ArrayData);
+                                if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic][$NomAgence])){
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom] += array_sum($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$TypeCol->nom] = array_sum($ArrayData);
+                                }
+
                                 if(array_key_exists($TypeCol->nom,$ArrayFinalResult[$IdIndic]['total'])){
                                     $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += array_sum($ArrayData);
                                 } else {
