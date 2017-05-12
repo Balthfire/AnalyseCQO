@@ -738,9 +738,22 @@ class Controle extends CI_Controller
 
     public function ProcessCalcul()
     {
+        $this->load->model("Etape_model");
+        $this->load->model("Indicateur_model");
+        $this->load->model("Structure_model");
+        $this->load->model("Feuille_model");
+        $this->load->model("Colonne_model");
+        $this->load->model("Type_Colonne_model");
+        $this->load->model("Operateur_model");
+        $this->load->model("Agence_model");
+
+
         $ArrayIndicEtape = $this->GenerateEtape();
-        //$this->GenerateQuery2($ArrayIndicEtape);
-        $this->GenerateQuery($ArrayIndicEtape);
+        $UnsortedResultArray = $this->UnsortedDataResult($ArrayIndicEtape);
+        $ArrayFeuilleStructOperateur = $UnsortedResultArray['ArrayFSO'];
+        unset($UnsortedResultArray['ArrayFSO']);
+        $SortedResultArray = $this->SortResultArray($UnsortedResultArray);
+        $ResultArray = $this->CalculFunction($SortedResultArray,$ArrayFeuilleStructOperateur);
     }
 
     public function GenerateEtape()
@@ -808,36 +821,16 @@ class Controle extends CI_Controller
     }
 
     //Fonction principale du calcul 03/05/2017
-    public function GenerateQuery($ArrayIndicEtape)
-    {
-        $this->load->model("Etape_model");
-        $this->load->model("Indicateur_model");
-        $this->load->model("Structure_model");
-        $this->load->model("Colonne_model");
-        $this->load->model("Type_Colonne_model");
-        $this->load->model("Operateur_model");
-        $this->load->model("Agence_model");
+    public function UnsortedDataResult($ArrayIndicEtape)
 
+    {
         $Indicateur = new Indicateur_model();
         $ArrayResult = array();
 
         $ArrayFeuilleStructOperateur = array();
         foreach ($ArrayIndicEtape as $idIndic => $ArrayInfo) {
             $ArrayFeuille = $this->GetIdStructsFromEtape($ArrayInfo);
-/*
-            foreach ($ArrayFeuille as $idFeuille => $ArrayTypeCol) {
-                $IdStructs = "";
-                foreach ($ArrayTypeCol as $nomTypeCol => $ArrayConteneur) {
-                    foreach ($ArrayConteneur as $conteneur => $ArrayInfos) {
-                        foreach ($ArrayInfos as $indice => $info) {
-                            if ($conteneur == "IdStructs") {
-                                $IdStructs = $IdStructs . "," . $info;
-                            }
-                        }
-                    }
-                }
-                $IdStructs = substr($IdStructs, 1);
-*/
+
             foreach ($ArrayFeuille as $idFeuille => $ArrayTypeCol) {
                 $ArrayQueries = array();
                 $IdStructs = "";
@@ -867,168 +860,210 @@ class Controle extends CI_Controller
 
                 $Results = $this->GenerateUpdateQueries($ArrayTypeCol);
                 $ArrayQueries = array_merge($ArrayQueries, $Results['Queries']);
-                /* $TempTables = $Results['TempTables'];
-                 $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_Sorted;";
-                 $ArrayQueries[] = $this->GenerateJoinQuery($TempTables);
-                 $ArrayQueries[] = "DROP TEMPORARY TABLE IF EXISTS TMP_Sorted2;";
-                 $ArrayQueries[] = "CREATE TEMPORARY TABLE TMP_Sorted2 as (SELECT * FROM TMP_Sorted);";
-                 $ArrayQueries['select'] = $this->GenerateSelectQuery($ArrayTypeCol);
-                */
                 $ArrayQueries['select'] = "SELECT * FROM TMP_data";
                 $indic = $Indicateur->get_by_id($idIndic);
                 $result = $Indicateur->execute_super_query($ArrayQueries);
                 $megaquery = $result['megaquery'];
                 unset($result['megaquery']);
                 $ArrayResult[$idIndic][$idFeuille] = $result;
+                $ArrayResult['ArrayFSO'] = $ArrayFeuilleStructOperateur;
             }
         }
+        return ($ArrayResult);
+    }
 
-        $FinalResult = array();
+    public function SortResultArray($ArrayResult)
+    {
+        $SortedArray = array();
         foreach ($ArrayResult as $IdIndic => $arrayfeuille) {
             foreach ($arrayfeuille as $idFeuille => $ArrayDatas) {
                 foreach ($ArrayDatas as $indice => $ArrayDataResult) {
-                    $FinalResult[$IdIndic][$idFeuille][$ArrayDataResult['num_ligne_excel']][$ArrayDataResult['id_Structure']] = [$ArrayDataResult['data']];
+                    $SortedArray[$IdIndic][$idFeuille][$ArrayDataResult['num_ligne_excel']][$ArrayDataResult['id_Structure']] = [$ArrayDataResult['data']];
                 }
             }
         }
+        return ($SortedArray);
+    }
 
-        $this->load->model("Feuille_model");
-        $feuilleModel = new Feuille_model();
+    public function CalculFunction($SortedArray,$ArrayFeuilleStructOperateur)
+    {
+        $ArrayFinalResult = array();
+        foreach ($SortedArray as $IdIndic => $ArrayIdFeuille) {
+            $Return = $this->LineToIdentifiant($ArrayIdFeuille);
+            $GroupArray = $Return['GroupArray'];
+            $ArrayMultipleIdentifiant = $Return['ArrayMI'];
+            $CCSArray = $this->ReplaceNumlineByData($GroupArray,$ArrayIdFeuille);
+            $IdentifiantArray = $this->IdentifiantArray($ArrayMultipleIdentifiant,$ArrayIdFeuille);
+            $CCSArray = $this->ArrayGroupBy($CCSArray,$IdentifiantArray);
+            $ArrayFinalResult = $this->ApplyOperateurs($CCSArray,$IdIndic,$ArrayFeuilleStructOperateur);
+        }
+
+        foreach($ArrayFinalResult as $id => $array) {
+            /*$indic = $Indicateur->get_by_id($id);
+            var_dump($indic->nom);*/
+            var_dump($array);
+        }
+
+        return($ArrayFinalResult);
+    }
+
+
+    // Création d'Array permettant d'identifier les identifiants et de noter les lignes du fichier leur correspondant
+    public function LineToIdentifiant($ArrayIdFeuille)
+    {
+        $structModel = new Structure_model();
+        $colonneModel = new Colonne_model();
+        $TypeColModel = new Type_colonne_model();
+
+        $GroupArray = array();
+        $ArrayMultipleIdentifiant = array();
+        foreach ($ArrayIdFeuille as $IdFeuille => $ArrayNumLigne) {
+            foreach ($ArrayNumLigne as $numligne => $ArrayIdStructure) {
+                foreach ($ArrayIdStructure as $idStructure => $ArrayData) {
+                    $structure = $structModel->get_by_id($idStructure);
+                    $colonne = $colonneModel->get_by_id($structure->id_Colonne);
+                    $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
+
+                    if ($typecolonne->isIdentifiant) {
+                        if($typecolonne->nom == "Identifiant"){ // TODO : changer pour CCS et NNI
+                            $GroupArray[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
+                        } else {
+                            $ArrayMultipleIdentifiant[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
+                        }
+                    }/*
+                    if ($typecolonne->isIdentifiant) {
+                         // TODO : changer pour CCS et NNI
+                            $GroupArray[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
+
+                            //$ArrayMultipleIdentifiant[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
+
+                    }*/
+                }
+            }
+        }
+        $Return['GroupArray'] = $GroupArray;
+        $Return['ArrayMI'] = $ArrayMultipleIdentifiant;
+        return($Return);
+    }
+
+    // Remplacement des lignes par les données réelles afin de pouvoir appliquer les opérateurs
+    public function ReplaceNumlineByData($GroupArray,$ArrayIdFeuille)
+    {
         $structModel = new Structure_model();
         $colonneModel = new Colonne_model();
         $TypeColModel = new Type_colonne_model();
         $agenceModel = new Agence_model();
-        $indicateurModel = new Indicateur_model();
-        $operateurModel = new Operateur_model();
 
-
-        $ArrayFinalResult = array();
-        // Création d'un Array permettant d'identifier les identifiants et de noter les lignes du fichier leur correspondant
-        foreach ($FinalResult as $IdIndic => $ArrayIdFeuille) {
-            $GroupArray = array();
-            $ArrayMultipleIdentifiant = array();
-            foreach ($ArrayIdFeuille as $IdFeuille => $ArrayNumLigne) {
-                foreach ($ArrayNumLigne as $numligne => $ArrayIdStructure) {
-                    foreach ($ArrayIdStructure as $idStructure => $ArrayData) {
-                        $structure = $structModel->get_by_id($idStructure);
-                        $colonne = $colonneModel->get_by_id($structure->id_Colonne);
-                        $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
-                        if ($typecolonne->isIdentifiant) {
-                            if($typecolonne->nom == "Identifiant"){ // TODO : changer pour CCS et NNI
-                                $GroupArray[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
-                            } else {
-                                $ArrayMultipleIdentifiant[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
-                            }
-                        }
-                    }
-                }
-            }
-            //TODO : Créer un second array des identifiants secondaires à insérer
-
-            // Remplacement des lignes par les données réelles afin de pouvoir appliquer les opérateurs
-            $CCSArray = array();
-            $ArrayIdentifiant=$GroupArray['Identifiant'];
-           // foreach($GroupArray as $typecolonneIdentifiant => $ArrayIdentifiant) {
-                foreach ($ArrayIdentifiant as $Identifiant => $ArrayFeuille) {
-                    if (strlen($Identifiant) > 1){
-                        $Agence = $agenceModel->get_by_id($Identifiant);
-                        foreach ($ArrayFeuille as $IdFeuille => $ArrayNumLigne) {
-                            foreach ($ArrayNumLigne as $indice => $numligne) {
-                                foreach ($ArrayIdFeuille[$IdFeuille][$numligne] as $idStructure => $ArrayData) {
-                                    $structure = $structModel->get_by_id($idStructure);
-                                    $colonne = $colonneModel->get_by_id($structure->id_Colonne);
-                                    $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
-                                    if (!($typecolonne->isIdentifiant)) {
-                                        $CCSArray[$Agence->nom][$idStructure][$numligne] = abs($ArrayData[0]);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-            $IdentifiantArray = array();
-            $ArrayIdentifiant=$ArrayMultipleIdentifiant['DMR'];
-            // foreach($GroupArray as $typecolonneIdentifiant => $ArrayIdentifiant) {
-            foreach ($ArrayIdentifiant as $Identifiant => $ArrayFeuille) {
-                if (strlen($Identifiant) > 1){
-                    foreach ($ArrayFeuille as $IdFeuille => $ArrayNumLigne) {
-                        foreach ($ArrayNumLigne as $indice => $numligne) {
-                            foreach ($ArrayIdFeuille[$IdFeuille][$numligne] as $idStructure => $ArrayData) {
-                                $structure = $structModel->get_by_id($idStructure);
-                                $colonne = $colonneModel->get_by_id($structure->id_Colonne);
-                                $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
-                                if (!($typecolonne->isIdentifiant)) {
-                                    $IdentifiantArray[$Identifiant][$idStructure][$numligne] = abs($ArrayData[0]);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            $Array = $this->ArrayGroupBy($CCSArray,$IdentifiantArray);
-
-
-            //Génération des résultats par agence et des totaux
-            $ArrayFinalResult[$IdIndic]['total'] = array();
-            foreach($Array as $NomAgence => $DMRArray){
-                foreach($DMRArray as $DMR =>$ArrayIdStructure ) {
-                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR] = array();
-                    foreach ($ArrayIdStructure as $idStruct => $ArrayData) {
-                        $struct = $structModel->get_by_id($idStruct);
-                        $col = $colonneModel->get_by_id($struct->id_Colonne);
-                        $TypeCol = $TypeColModel->get_by_id($col->id_Type_Colonne);
-                        $ArrayOperateur = $ArrayFeuilleStructOperateur[$IdIndic][$struct->id_feuille][$idStruct];
-                        foreach ($ArrayOperateur as $indice => $idOperateur) {
-                            $operateur = $operateurModel->get_by_id($idOperateur);
-                            switch ($operateur->valeur) {
-                                case "NBVAL":
-                                    if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic][$NomAgence][$DMR])) {
-                                        $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] += count($ArrayData);
-                                    } else {
-                                        $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] = count($ArrayData);
-                                    }
-
-                                    if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic]['total'])) {
-                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += count($ArrayData);
-                                    } else {
-                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = count($ArrayData);
-                                    }
-                                    break;
-                                case "SOMME":
-                                    if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic][$NomAgence][$DMR])) {
-                                        $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] += array_sum($ArrayData);
-                                    } else {
-                                        $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] = array_sum($ArrayData);
-                                    }
-
-                                    if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic]['total'])) {
-                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += array_sum($ArrayData);
-                                    } else {
-                                        $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = array_sum($ArrayData);
-                                    }
-                                    break;
+        $CCSArray = array();
+        $ArrayIdentifiant = $GroupArray['Identifiant'];
+        // foreach($GroupArray as $typecolonneIdentifiant => $ArrayIdentifiant) {
+        foreach ($ArrayIdentifiant as $Identifiant => $ArrayFeuille) {
+            if (strlen($Identifiant) >= 1){
+                $Agence = $agenceModel->get_by_id($Identifiant);
+                foreach ($ArrayFeuille as $IdFeuille => $ArrayNumLigne) {
+                    foreach ($ArrayNumLigne as $indice => $numligne) {
+                        foreach ($ArrayIdFeuille[$IdFeuille][$numligne] as $idStructure => $ArrayData) {
+                            $structure = $structModel->get_by_id($idStructure);
+                            $colonne = $colonneModel->get_by_id($structure->id_Colonne);
+                            $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
+                            if (!($typecolonne->isIdentifiant)) {
+                                $CCSArray[$Agence->nom][$idStructure][$numligne] = abs($ArrayData[0]);
                             }
                         }
                     }
                 }
             }
         }
-
-        foreach($ArrayFinalResult as $id => $array)
-        {
-            $indic = $Indicateur->get_by_id($id);
-            var_dump($indic->nom);
-            var_dump($array);
-        }
+        return($CCSArray);
     }
 
+    public function IdentifiantArray($ArrayMultipleIdentifiant,$ArrayIdFeuille)
+    {
+        $structModel = new Structure_model();
+        $colonneModel = new Colonne_model();
+        $TypeColModel = new Type_colonne_model();
+
+        $IdentifiantArray = array();
+        $ArrayIdentifiant=$ArrayMultipleIdentifiant['DMR'];
+        // foreach($GroupArray as $typecolonneIdentifiant => $ArrayIdentifiant) {
+        foreach ($ArrayIdentifiant as $Identifiant => $ArrayFeuille) {
+            if (strlen($Identifiant) >= 1){
+                foreach ($ArrayFeuille as $IdFeuille => $ArrayNumLigne) {
+                    foreach ($ArrayNumLigne as $indice => $numligne) {
+                        foreach ($ArrayIdFeuille[$IdFeuille][$numligne] as $idStructure => $ArrayData) {
+                            $structure = $structModel->get_by_id($idStructure);
+                            $colonne = $colonneModel->get_by_id($structure->id_Colonne);
+                            $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
+                            if (!($typecolonne->isIdentifiant)) {
+                                $IdentifiantArray[$Identifiant][$idStructure][$numligne] = abs($ArrayData[0]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return($IdentifiantArray);
+    }
+
+    //Applique les méthodes de calcul liée aux opérateurs et retourne un tableau ordonné des résultats
+    public function ApplyOperateurs($CCSArray,$IdIndic,$ArrayFeuilleStructOperateur)
+    {
+        $structModel = new Structure_model();
+        $colonneModel = new Colonne_model();
+        $TypeColModel = new Type_colonne_model();
+        $operateurModel = new Operateur_model();
+
+        $ArrayFinalResult[$IdIndic]['total'] = array();
+        foreach($CCSArray as $NomAgence => $DMRArray){
+            //TODO : Avec ou sans DMR
+            foreach($DMRArray as $DMR =>$ArrayIdStructure ) {
+                $ArrayFinalResult[$IdIndic][$NomAgence][$DMR] = array();
+                foreach ($ArrayIdStructure as $idStruct => $ArrayData) {
+                    $struct = $structModel->get_by_id($idStruct);
+                    $col = $colonneModel->get_by_id($struct->id_Colonne);
+                    $TypeCol = $TypeColModel->get_by_id($col->id_Type_Colonne);
+                    $ArrayOperateur = $ArrayFeuilleStructOperateur[$IdIndic][$struct->id_feuille][$idStruct];
+                    foreach ($ArrayOperateur as $indice => $idOperateur) {
+                        $operateur = $operateurModel->get_by_id($idOperateur);
+                        switch ($operateur->valeur) {
+                            case "NBVAL":
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic][$NomAgence][$DMR])) {
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] += count($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] = count($ArrayData);
+                                }
+
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic]['total'])) {
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += count($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = count($ArrayData);
+                                }
+                                break;
+                            case "SOMME":
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic][$NomAgence][$DMR])) {
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] += array_sum($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] = array_sum($ArrayData);
+                                }
+
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic]['total'])) {
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += array_sum($ArrayData);
+                                } else {
+                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = array_sum($ArrayData);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        return($ArrayFinalResult);
+    }
+
+    //Permet de regrouper les identifiants (Etablit une liste de clé, et vérifie si les clés sont présentes dans le second array pour les groupé)
     function ArrayGroupBy($ArrayPrimeIdentifiant,$ArrayOtherIdentifiant)
     {
-        var_dump($ArrayPrimeIdentifiant);
         $ArrayKeysPrime = array_keys($ArrayPrimeIdentifiant);
-        var_dump($ArrayKeysPrime);
         $ArrayGrouped = array();
         foreach($ArrayKeysPrime as $indice => $key){
             foreach($ArrayOtherIdentifiant as $Identifiant => $ArrayIdStructure){
@@ -1044,7 +1079,6 @@ class Controle extends CI_Controller
             }
         }
         return($ArrayGrouped);
-
     }
 
     function GetIdStructsFromEtape($ArrayInfo)
@@ -1073,69 +1107,7 @@ class Controle extends CI_Controller
         }
         return($ArrayFeuille);
     }
-    /*
-    function GetIdStructsFromEtape($ArrayInfo)
-    {
-        $Etape = new Etape_model();
-        $Structure = new Structure_model();
-        $Colonne = new Colonne_model();
-        $Type_Colonne = new Type_colonne_model();
-        $ArrayIdStruct = array();
-        $IdStructs="";
 
-        foreach($ArrayInfo['arrayEtapes'] as $key => $idEtape)
-        {
-            $varEtape = $Etape->get_by_id($idEtape);
-            $varStruct = $Structure->get_by_id($varEtape->id_Structure);
-            $varColonne = $Colonne->get_by_id($varStruct->id_Colonne);
-            $varTypeColonne = $Type_Colonne->get_by_id($varColonne->id_Type_Colonne);
-
-            $Resp = $Structure->get_column_identifiant($varStruct->id_Fichier,$varStruct->id_feuille);
-            $structIdent = $Resp[0]['id_Colonne'];
-            if(isset($ArrayIdStruct['Identifiant']['idStruct'])){
-                if(!in_array($structIdent,$ArrayIdStruct['Identifiant']['idStruct'])) {
-                    $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
-                    $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
-                    $IdStructs = $IdStructs.','.$structIdent;
-                }
-            } else {
-                $ArrayIdStruct['Identifiant']['idStruct'][] = $structIdent;
-                $ArrayIdStruct['Identifiant']['Operateurs'][] = null;
-                $IdStructs = $IdStructs.','.$structIdent;
-            }
-            $IdStructs = $IdStructs.','.$varEtape->id_Structure;
-            $ArrayIdStruct[$varTypeColonne->nom]['idStruct'][] = $varEtape->id_Structure;
-            $ArrayIdStruct[$varTypeColonne->nom]['Operateurs'][] = $varEtape->id_Operateur;
-        }
-        $IdStructs = substr($IdStructs, 1);
-        $ArrayIdStruct['IdStructs'] = $IdStructs;
-        return($ArrayIdStruct);
-    }
-
-    function GenerateUpdateQueries($ArrayIdStruct)
-    {
-        $ArrayCreateTempTables = array();
-        $ArrayQueries = array();
-        $ArrayTempTable = array();
-        foreach($ArrayIdStruct as $nomtype => $KeyStruct)
-        {
-            $KeyStruct = $ArrayIdStruct[$nomtype]['IdStructs'];
-            $nomtable = "TMP_data_$nomtype";
-            $ArrayTempTable[$nomtype] = $nomtable;
-            for($s=0;$s<=count($KeyStruct)-1;$s++)
-            {
-                $ArrayQueries[] = "UPDATE TMP_data SET Nom_Type_Colonne =(SELECT DISTINCT nom FROM TMP_Type_Colonne,TMP_Colonne,TMP_struct WHERE TMP_Type_Colonne.id_Type_Colonne = TMP_Colonne.id_Type_Colonne AND TMP_Colonne.id_Colonne = TMP_struct.id_Colonne AND id_structure = $KeyStruct[$s]) WHERE id_Structure = $KeyStruct[$s];";
-                $ArrayQueries[] = "UPDATE TMP_data SET id_feuille =(SELECT DISTINCT id_feuille FROM TMP_struct WHERE id_structure = $KeyStruct[$s]) WHERE id_Structure = $KeyStruct[$s];";
-                $ArrayCreateTempTables[] = "DROP TEMPORARY TABLE IF EXISTS $nomtable;";
-                $ArrayCreateTempTables[] = "CREATE TEMPORARY TABLE $nomtable AS (SELECT id_data as id_data_$nomtype,num_ligne_excel as num_ligne_excel_$nomtype,data as data_$nomtype FROM TMP_data WHERE Nom_Type_Colonne = '$nomtype');";
-            }
-        }
-        $ArrayQueries = array_merge($ArrayQueries,$ArrayCreateTempTables);
-        $ArrayResult['Queries'] = $ArrayQueries;
-        $ArrayResult['TempTables'] = $ArrayTempTable;
-        return($ArrayResult);
-    }
-*/
     function GenerateUpdateQueries($ArrayTypeColonne)
     {
         $ArrayQueries = array();
