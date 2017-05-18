@@ -747,13 +747,13 @@ class Controle extends CI_Controller
         $this->load->model("Operateur_model");
         $this->load->model("Agence_model");
 
-
         $ArrayIndicEtape = $this->GenerateEtape();
         $UnsortedResultArray = $this->UnsortedDataResult($ArrayIndicEtape);
         $ArrayFeuilleStructOperateur = $UnsortedResultArray['ArrayFSO'];
         unset($UnsortedResultArray['ArrayFSO']);
         $SortedResultArray = $this->SortResultArray($UnsortedResultArray);
         $ResultArray = $this->CalculFunction($SortedResultArray,$ArrayFeuilleStructOperateur);
+        var_dump($ResultArray);
     }
 
     public function GenerateEtape()
@@ -887,26 +887,29 @@ class Controle extends CI_Controller
 
     public function CalculFunction($SortedArray,$ArrayFeuilleStructOperateur)
     {
+        $Indicateur = new Indicateur_model();
         $ArrayFinalResult = array();
         foreach ($SortedArray as $IdIndic => $ArrayIdFeuille) {
-            $Return = $this->LineToIdentifiant($ArrayIdFeuille);
+            $indic = $Indicateur->get_by_id($IdIndic);
+            /*$Return = $this->LineToIdentifiant($ArrayIdFeuille);
             $GroupArray = $Return['GroupArray'];
-            $ArrayMultipleIdentifiant = $Return['ArrayMI'];
-            $CCSArray = $this->ReplaceNumlineByData($GroupArray,$ArrayIdFeuille);
-            $IdentifiantArray = $this->IdentifiantArray($ArrayMultipleIdentifiant,$ArrayIdFeuille);
-            $CCSArray = $this->ArrayGroupBy($CCSArray,$IdentifiantArray);
-            $ArrayFinalResult = $this->ApplyOperateurs($CCSArray,$IdIndic,$ArrayFeuilleStructOperateur);
+            $ArrayMultipleIdentifiant = $Return['ArrayMI'];*/
+            $Return = $this->LineToIdentifiant($ArrayIdFeuille);
+            if(count(array_keys($Return))>1){
+                $GroupArray = $Return['Identifiant'];
+                $ArrayMultipleIdentifiant = $Return['DMR'];
+                $CCSArray = $this->ReplaceNumlineByData($GroupArray,$ArrayIdFeuille);
+                $IdentifiantArray = $this->IdentifiantArray($ArrayMultipleIdentifiant,$ArrayIdFeuille);
+                $CCSArray = $this->ArrayGroupBy($CCSArray,$IdentifiantArray);
+                $ArrayFinalResult[$IdIndic] = $this->ApplyOperateursWithDMR($CCSArray,$IdIndic,$ArrayFeuilleStructOperateur);
+            } else {
+                $GroupArray = $Return;
+                $CCSArray = $this->ReplaceNumlineByData($GroupArray,$ArrayIdFeuille);
+                $ArrayFinalResult[$IdIndic] = $this->ApplyOperateurs($CCSArray,$IdIndic,$ArrayFeuilleStructOperateur);
+            }
         }
-
-        foreach($ArrayFinalResult as $id => $array) {
-            /*$indic = $Indicateur->get_by_id($id);
-            var_dump($indic->nom);*/
-            var_dump($array);
-        }
-
         return($ArrayFinalResult);
     }
-
 
     // Création d'Array permettant d'identifier les identifiants et de noter les lignes du fichier leur correspondant
     public function LineToIdentifiant($ArrayIdFeuille)
@@ -924,26 +927,27 @@ class Controle extends CI_Controller
                     $colonne = $colonneModel->get_by_id($structure->id_Colonne);
                     $typecolonne = $TypeColModel->get_by_id($colonne->id_Type_Colonne);
 
+                    /*
                     if ($typecolonne->isIdentifiant) {
                         if($typecolonne->nom == "Identifiant"){ // TODO : changer pour CCS et NNI
                             $GroupArray[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
                         } else {
                             $ArrayMultipleIdentifiant[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
                         }
-                    }/*
+                    }*/
                     if ($typecolonne->isIdentifiant) {
                          // TODO : changer pour CCS et NNI
                             $GroupArray[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
-
                             //$ArrayMultipleIdentifiant[$typecolonne->nom][$ArrayData[0]][$IdFeuille][] = $numligne;
-
-                    }*/
+                    }
                 }
             }
         }
+        /*
         $Return['GroupArray'] = $GroupArray;
         $Return['ArrayMI'] = $ArrayMultipleIdentifiant;
-        return($Return);
+        */
+        return($GroupArray);
     }
 
     // Remplacement des lignes par les données réelles afin de pouvoir appliquer les opérateurs
@@ -1013,11 +1017,89 @@ class Controle extends CI_Controller
         $TypeColModel = new Type_colonne_model();
         $operateurModel = new Operateur_model();
 
-        $ArrayFinalResult[$IdIndic]['total'] = array();
+        $ArrayFinalResult['total'] = array();
+        $ArrayDistinctCount = array();
+        foreach($CCSArray as $NomAgence => $ArrayIdStructure){
+            $ArrayFinalResult[$NomAgence] = array();
+            foreach ($ArrayIdStructure as $idStruct => $ArrayData) {
+                $struct = $structModel->get_by_id($idStruct);
+                $col = $colonneModel->get_by_id($struct->id_Colonne);
+                $TypeCol = $TypeColModel->get_by_id($col->id_Type_Colonne);
+                $ArrayOperateur = $ArrayFeuilleStructOperateur[$IdIndic][$struct->id_feuille][$idStruct];
+                foreach ($ArrayOperateur as $indice => $idOperateur) {
+                    $operateur = $operateurModel->get_by_id($idOperateur);
+                    switch ($operateur->valeur) {
+                        case "NBVAL":
+                            if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence])) {
+                                $ArrayFinalResult[$NomAgence][$TypeCol->nom] += count($ArrayData);
+                            } else {
+                                $ArrayFinalResult[$NomAgence][$TypeCol->nom] = count($ArrayData);
+                            }
+
+                            if (array_key_exists($TypeCol->nom, $ArrayFinalResult['total'])) {
+                                $ArrayFinalResult['total'][$TypeCol->nom] += count($ArrayData);
+                            } else {
+                                $ArrayFinalResult['total'][$TypeCol->nom] = count($ArrayData);
+                            }
+                            break;
+                        case "SOMME":
+                            if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence])) {
+                                $ArrayFinalResult[$NomAgence][$TypeCol->nom] += array_sum($ArrayData);
+                            } else {
+                                $ArrayFinalResult[$NomAgence][$TypeCol->nom] = array_sum($ArrayData);
+                            }
+
+                            if (array_key_exists($TypeCol->nom, $ArrayFinalResult['total'])) {
+                                $ArrayFinalResult['total'][$TypeCol->nom] += array_sum($ArrayData);
+                            } else {
+                                $ArrayFinalResult['total'][$TypeCol->nom] = array_sum($ArrayData);
+                            }
+                            break;
+                        case "NBVAL DISTINCT":
+                            $i=1;
+                            foreach($ArrayData as $numligne => $valeur)
+                            {
+                                if(array_key_exists($NomAgence,$ArrayDistinctCount)){
+                                    if(array_search($valeur,$ArrayDistinctCount[$NomAgence]) == false){
+                                        $ArrayDistinctCount[$NomAgence][$i] = $valeur;
+                                    }
+                                } else {
+                                    $ArrayDistinctCount[$NomAgence][$i] = $valeur;
+                                }
+                                $i++;
+                            }
+                            if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence])) {
+                                $ArrayFinalResult[$NomAgence][$TypeCol->nom] += count($ArrayDistinctCount[$NomAgence]);
+                            } else {
+                                $ArrayFinalResult[$NomAgence][$TypeCol->nom] = count($ArrayDistinctCount[$NomAgence]);
+                            }
+
+                            if (array_key_exists($TypeCol->nom, $ArrayFinalResult['total'])) {
+                                $ArrayFinalResult['total'][$TypeCol->nom] += count($ArrayDistinctCount[$NomAgence]);
+                            } else {
+                                $ArrayFinalResult['total'][$TypeCol->nom] = count($ArrayDistinctCount[$NomAgence]);
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+        return($ArrayFinalResult);
+    }
+
+    public function ApplyOperateursWithDMR($CCSArray,$IdIndic,$ArrayFeuilleStructOperateur)
+    {
+        $structModel = new Structure_model();
+        $colonneModel = new Colonne_model();
+        $TypeColModel = new Type_colonne_model();
+        $operateurModel = new Operateur_model();
+
+        $ArrayFinalResult['total'] = array();
+        $ArrayDistinctCount = array();
         foreach($CCSArray as $NomAgence => $DMRArray){
             //TODO : Avec ou sans DMR
             foreach($DMRArray as $DMR =>$ArrayIdStructure ) {
-                $ArrayFinalResult[$IdIndic][$NomAgence][$DMR] = array();
+                $ArrayFinalResult[$NomAgence][$DMR] = array();
                 foreach ($ArrayIdStructure as $idStruct => $ArrayData) {
                     $struct = $structModel->get_by_id($idStruct);
                     $col = $colonneModel->get_by_id($struct->id_Colonne);
@@ -1027,29 +1109,55 @@ class Controle extends CI_Controller
                         $operateur = $operateurModel->get_by_id($idOperateur);
                         switch ($operateur->valeur) {
                             case "NBVAL":
-                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic][$NomAgence][$DMR])) {
-                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] += count($ArrayData);
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence][$DMR])) {
+                                    $ArrayFinalResult[$NomAgence][$DMR][$TypeCol->nom] += count($ArrayData);
                                 } else {
-                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] = count($ArrayData);
+                                    $ArrayFinalResult[$NomAgence][$DMR][$TypeCol->nom] = count($ArrayData);
                                 }
 
-                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic]['total'])) {
-                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += count($ArrayData);
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult['total'])) {
+                                    $ArrayFinalResult['total'][$TypeCol->nom] += count($ArrayData);
                                 } else {
-                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = count($ArrayData);
+                                    $ArrayFinalResult['total'][$TypeCol->nom] = count($ArrayData);
                                 }
                                 break;
                             case "SOMME":
-                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic][$NomAgence][$DMR])) {
-                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] += array_sum($ArrayData);
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence][$DMR])) {
+                                    $ArrayFinalResult[$NomAgence][$DMR][$TypeCol->nom] += array_sum($ArrayData);
                                 } else {
-                                    $ArrayFinalResult[$IdIndic][$NomAgence][$DMR][$TypeCol->nom] = array_sum($ArrayData);
+                                    $ArrayFinalResult[$NomAgence][$DMR][$TypeCol->nom] = array_sum($ArrayData);
                                 }
 
-                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$IdIndic]['total'])) {
-                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] += array_sum($ArrayData);
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult['total'])) {
+                                    $ArrayFinalResult['total'][$TypeCol->nom] += array_sum($ArrayData);
                                 } else {
-                                    $ArrayFinalResult[$IdIndic]['total'][$TypeCol->nom] = array_sum($ArrayData);
+                                    $ArrayFinalResult['total'][$TypeCol->nom] = array_sum($ArrayData);
+                                }
+                                break;
+                            case "NBVAL DISTINCT":
+                                $i=1;
+                                foreach($ArrayData as $numligne => $valeur)
+                                {
+                                    if(array_key_exists($NomAgence,$ArrayDistinctCount)){
+                                        if(array_search($valeur,$ArrayDistinctCount[$NomAgence]) == false){
+                                            $ArrayDistinctCount[$NomAgence][$i] = $valeur;
+                                        }
+                                    } else {
+                                        $ArrayDistinctCount[$NomAgence][$i] = $valeur;
+                                    }
+                                    var_dump($ArrayDistinctCount);
+                                    $i++;
+                                }
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence])) {
+                                    $ArrayFinalResult[$NomAgence][$DMR][$TypeCol->nom] += count($ArrayDistinctCount[$NomAgence]);
+                                } else {
+                                    $ArrayFinalResult[$NomAgence][$DMR][$TypeCol->nom] = count($ArrayDistinctCount[$NomAgence]);
+                                }
+
+                                if (array_key_exists($TypeCol->nom, $ArrayFinalResult['total'])) {
+                                    $ArrayFinalResult['total'][$TypeCol->nom] += count($ArrayDistinctCount[$NomAgence]);
+                                } else {
+                                    $ArrayFinalResult['total'][$TypeCol->nom] = count($ArrayDistinctCount[$NomAgence]);
                                 }
                                 break;
                         }
@@ -1059,6 +1167,7 @@ class Controle extends CI_Controller
         }
         return($ArrayFinalResult);
     }
+
 
     //Permet de regrouper les identifiants (Etablit une liste de clé, et vérifie si les clés sont présentes dans le second array pour les groupé)
     function ArrayGroupBy($ArrayPrimeIdentifiant,$ArrayOtherIdentifiant)
