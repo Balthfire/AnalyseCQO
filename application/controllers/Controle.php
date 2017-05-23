@@ -753,6 +753,9 @@ class Controle extends CI_Controller
         unset($UnsortedResultArray['ArrayFSO']);
         $SortedResultArray = $this->SortResultArray($UnsortedResultArray);
         $ResultArray = $this->CalculFunction($SortedResultArray,$ArrayFeuilleStructOperateur);
+
+        $data['ResultArray'] = $ResultArray;
+        $this->load->view('viewControleResultat',$data);
         var_dump($ResultArray);
     }
 
@@ -795,12 +798,9 @@ class Controle extends CI_Controller
             $Indicateur->insert($insert_data);
             $idIndicateur = $Indicateur->get_last_id();
 
-            foreach($ArrayDenoNum as $numerateur => $ArrayIdStruct)
-            {
-                foreach($ArrayIdStruct as $idStruct => $ArrayOperateur)
-                {
-                    foreach($ArrayOperateur as $key => $idOperateur)
-                    {
+            foreach($ArrayDenoNum as $numerateur => $ArrayIdStruct) {
+                foreach($ArrayIdStruct as $idStruct => $ArrayOperateur) {
+                    foreach($ArrayOperateur as $key => $idOperateur) {
                         $insert_data = array(
                             "ordre" => $ordre,
                             "id_Type_Indicateur"=>$idTypeIndic,
@@ -896,8 +896,8 @@ class Controle extends CI_Controller
             $ArrayMultipleIdentifiant = $Return['ArrayMI'];*/
             $Return = $this->LineToIdentifiant($ArrayIdFeuille);
             if(count(array_keys($Return))>1){
-                $GroupArray = $Return['Identifiant'];
-                $ArrayMultipleIdentifiant = $Return['DMR'];
+                $GroupArray = $Return;
+                $ArrayMultipleIdentifiant = $Return;
                 $CCSArray = $this->ReplaceNumlineByData($GroupArray,$ArrayIdFeuille);
                 $IdentifiantArray = $this->IdentifiantArray($ArrayMultipleIdentifiant,$ArrayIdFeuille);
                 $CCSArray = $this->ArrayGroupBy($CCSArray,$IdentifiantArray);
@@ -1145,7 +1145,7 @@ class Controle extends CI_Controller
                                     } else {
                                         $ArrayDistinctCount[$NomAgence][$i] = $valeur;
                                     }
-                                    var_dump($ArrayDistinctCount);
+
                                     $i++;
                                 }
                                 if (array_key_exists($TypeCol->nom, $ArrayFinalResult[$NomAgence])) {
@@ -1163,6 +1163,9 @@ class Controle extends CI_Controller
                         }
                     }
                 }
+                var_dump($NomAgence);
+                var_dump($DMR);
+                var_dump($ArrayFinalResult[$NomAgence][$DMR]);
             }
         }
         return($ArrayFinalResult);

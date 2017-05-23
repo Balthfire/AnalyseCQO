@@ -15,6 +15,7 @@
 	    <tr><td>Nom</td><td><?php echo $nom; ?></td></tr>
 	    <tr><td>Id Controle</td><td><?php echo $id_Controle; ?></td></tr>
 	    <tr><td>Id Type Indicateur</td><td><?php echo $id_Type_Indicateur; ?></td></tr>
+	    <tr><td>Id Objectif</td><td><?php echo $id_Objectif; ?></td></tr>
 	    <tr><td></td><td><a href="<?php echo site_url('indicateur') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>

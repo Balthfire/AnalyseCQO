@@ -13,8 +13,8 @@
         <h2 style="margin-top:0px">Etape <?php echo $button ?></h2>
         <form action="<?php echo $action; ?>" method="post">
 	    <div class="form-group">
-            <label for="tinyint">AvecColonne <?php echo form_error('AvecColonne') ?></label>
-            <input type="text" class="form-control" name="AvecColonne" id="AvecColonne" placeholder="AvecColonne" value="<?php echo $AvecColonne; ?>" />
+            <label for="varchar">Parameter <?php echo form_error('Parameter') ?></label>
+            <input type="text" class="form-control" name="Parameter" id="Parameter" placeholder="Parameter" value="<?php echo $Parameter; ?>" />
         </div>
 	    <div class="form-group">
             <label for="int">Ordre <?php echo form_error('ordre') ?></label>

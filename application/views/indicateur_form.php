@@ -24,6 +24,10 @@
             <label for="int">Id Type Indicateur <?php echo form_error('id_Type_Indicateur') ?></label>
             <input type="text" class="form-control" name="id_Type_Indicateur" id="id_Type_Indicateur" placeholder="Id Type Indicateur" value="<?php echo $id_Type_Indicateur; ?>" />
         </div>
+	    <div class="form-group">
+            <label for="int">Id Objectif <?php echo form_error('id_Objectif') ?></label>
+            <input type="text" class="form-control" name="id_Objectif" id="id_Objectif" placeholder="Id Objectif" value="<?php echo $id_Objectif; ?>" />
+        </div>
 	    <input type="hidden" name="id_Indicateur" value="<?php echo $id_Indicateur; ?>" /> 
 	    <button type="submit" class="btn btn-primary"><?php echo $button ?></button> 
 	    <a href="<?php echo site_url('indicateur') ?>" class="btn btn-default">Cancel</a>

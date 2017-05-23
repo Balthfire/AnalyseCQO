@@ -10,11 +10,12 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Operateur Read</h2>
+        <h2 style="margin-top:0px">Objectif Read</h2>
         <table class="table">
-	    <tr><td>Valeur</td><td><?php echo $valeur; ?></td></tr>
-	    <tr><td>NeedParameter</td><td><?php echo $NeedParameter; ?></td></tr>
-	    <tr><td></td><td><a href="<?php echo site_url('operateur') ?>" class="btn btn-default">Cancel</a></td></tr>
+	    <tr><td>Seuil OK</td><td><?php echo $seuil_OK; ?></td></tr>
+	    <tr><td>Seuil OKKO</td><td><?php echo $seuil_OKKO; ?></td></tr>
+	    <tr><td>Seuil KO</td><td><?php echo $seuil_KO; ?></td></tr>
+	    <tr><td></td><td><a href="<?php echo site_url('objectif') ?>" class="btn btn-default">Cancel</a></td></tr>
 	</table>
         </body>
 </html>

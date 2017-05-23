@@ -12,7 +12,7 @@
     <body>
         <h2 style="margin-top:0px">Etape Read</h2>
         <table class="table">
-	    <tr><td>AvecColonne</td><td><?php echo $AvecColonne; ?></td></tr>
+	    <tr><td>Parameter</td><td><?php echo $Parameter; ?></td></tr>
 	    <tr><td>Ordre</td><td><?php echo $ordre; ?></td></tr>
 	    <tr><td>Id Operateur</td><td><?php echo $id_Operateur; ?></td></tr>
 	    <tr><td>Id Structure</td><td><?php echo $id_Structure; ?></td></tr>

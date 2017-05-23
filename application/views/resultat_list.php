@@ -10,10 +10,10 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Operateur List</h2>
+        <h2 style="margin-top:0px">Resultat List</h2>
         <div class="row" style="margin-bottom: 10px">
             <div class="col-md-4">
-                <?php echo anchor(site_url('operateur/create'),'Create', 'class="btn btn-primary"'); ?>
+                <?php echo anchor(site_url('resultat/create'),'Create', 'class="btn btn-primary"'); ?>
             </div>
             <div class="col-md-4 text-center">
                 <div style="margin-top: 8px" id="message">
@@ -23,7 +23,7 @@
             <div class="col-md-1 text-right">
             </div>
             <div class="col-md-3 text-right">
-                <form action="<?php echo site_url('operateur/index'); ?>" class="form-inline" method="get">
+                <form action="<?php echo site_url('resultat/index'); ?>" class="form-inline" method="get">
                     <div class="input-group">
                         <input type="text" class="form-control" name="q" value="<?php echo $q; ?>">
                         <span class="input-group-btn">
@@ -31,7 +31,7 @@
                                 if ($q <> '')
                                 {
                                     ?>
-                                    <a href="<?php echo site_url('operateur'); ?>" class="btn btn-default">Reset</a>
+                                    <a href="<?php echo site_url('resultat'); ?>" class="btn btn-default">Reset</a>
                                     <?php
                                 }
                             ?>
@@ -45,23 +45,25 @@
             <tr>
                 <th>No</th>
 		<th>Valeur</th>
-		<th>NeedParameter</th>
+		<th>Id Indicateur</th>
+		<th>CCS</th>
 		<th>Action</th>
             </tr><?php
-            foreach ($operateur_data as $operateur)
+            foreach ($resultat_data as $resultat)
             {
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $operateur->valeur ?></td>
-			<td><?php echo $operateur->NeedParameter ?></td>
+			<td><?php echo $resultat->valeur ?></td>
+			<td><?php echo $resultat->id_Indicateur ?></td>
+			<td><?php echo $resultat->CCS ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
-				echo anchor(site_url('operateur/read/'.$operateur->id_Operateur),'Read'); 
+				echo anchor(site_url('resultat/read/'.$resultat->id_Resultat),'Read'); 
 				echo ' | '; 
-				echo anchor(site_url('operateur/update/'.$operateur->id_Operateur),'Update'); 
+				echo anchor(site_url('resultat/update/'.$resultat->id_Resultat),'Update'); 
 				echo ' | '; 
-				echo anchor(site_url('operateur/delete/'.$operateur->id_Operateur),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
+				echo anchor(site_url('resultat/delete/'.$resultat->id_Resultat),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'); 
 				?>
 			</td>
 		</tr>

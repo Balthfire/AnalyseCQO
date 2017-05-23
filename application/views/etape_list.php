@@ -44,7 +44,7 @@
         <table class="table table-bordered" style="margin-bottom: 10px">
             <tr>
                 <th>No</th>
-		<th>AvecColonne</th>
+		<th>Parameter</th>
 		<th>Ordre</th>
 		<th>Id Operateur</th>
 		<th>Id Structure</th>
@@ -56,7 +56,7 @@
                 ?>
                 <tr>
 			<td width="80px"><?php echo ++$start ?></td>
-			<td><?php echo $etape->AvecColonne ?></td>
+			<td><?php echo $etape->Parameter ?></td>
 			<td><?php echo $etape->ordre ?></td>
 			<td><?php echo $etape->id_Operateur ?></td>
 			<td><?php echo $etape->id_Structure ?></td>

@@ -10,19 +10,23 @@
         </style>
     </head>
     <body>
-        <h2 style="margin-top:0px">Operateur <?php echo $button ?></h2>
+        <h2 style="margin-top:0px">Resultat <?php echo $button ?></h2>
         <form action="<?php echo $action; ?>" method="post">
 	    <div class="form-group">
             <label for="varchar">Valeur <?php echo form_error('valeur') ?></label>
             <input type="text" class="form-control" name="valeur" id="valeur" placeholder="Valeur" value="<?php echo $valeur; ?>" />
         </div>
 	    <div class="form-group">
-            <label for="tinyint">NeedParameter <?php echo form_error('NeedParameter') ?></label>
-            <input type="text" class="form-control" name="NeedParameter" id="NeedParameter" placeholder="NeedParameter" value="<?php echo $NeedParameter; ?>" />
+            <label for="int">Id Indicateur <?php echo form_error('id_Indicateur') ?></label>
+            <input type="text" class="form-control" name="id_Indicateur" id="id_Indicateur" placeholder="Id Indicateur" value="<?php echo $id_Indicateur; ?>" />
         </div>
-	    <input type="hidden" name="id_Operateur" value="<?php echo $id_Operateur; ?>" /> 
+	    <div class="form-group">
+            <label for="varchar">CCS <?php echo form_error('CCS') ?></label>
+            <input type="text" class="form-control" name="CCS" id="CCS" placeholder="CCS" value="<?php echo $CCS; ?>" />
+        </div>
+	    <input type="hidden" name="id_Resultat" value="<?php echo $id_Resultat; ?>" /> 
 	    <button type="submit" class="btn btn-primary"><?php echo $button ?></button> 
-	    <a href="<?php echo site_url('operateur') ?>" class="btn btn-default">Cancel</a>
+	    <a href="<?php echo site_url('resultat') ?>" class="btn btn-default">Cancel</a>
 	</form>
     </body>
 </html>

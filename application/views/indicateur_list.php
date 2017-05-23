@@ -47,6 +47,7 @@
 		<th>Nom</th>
 		<th>Id Controle</th>
 		<th>Id Type Indicateur</th>
+		<th>Id Objectif</th>
 		<th>Action</th>
             </tr><?php
             foreach ($indicateur_data as $indicateur)
@@ -57,6 +58,7 @@
 			<td><?php echo $indicateur->nom ?></td>
 			<td><?php echo $indicateur->id_Controle ?></td>
 			<td><?php echo $indicateur->id_Type_Indicateur ?></td>
+			<td><?php echo $indicateur->id_Objectif ?></td>
 			<td style="text-align:center" width="200px">
 				<?php 
 				echo anchor(site_url('indicateur/read/'.$indicateur->id_Indicateur),'Read'); 
